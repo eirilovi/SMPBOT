@@ -26,6 +26,16 @@ body{
   background: blue;
   border-radius: 50%;
 }
+.chatbot-toggler span{
+  position: absolute;
+}
+.show-chatbot .chatbot-toggler span:first-child,
+.chatbot-toggler span:last-child{
+  opacity: 0;
+}
+.show-chatbot .chatbot-toggler span:last-child{
+  opacity: 1;
+}
 .chatbot{
   position: fixed;
   right: 40px;
@@ -135,3 +145,4 @@ body{
   visibility:visible;
 
 }
+
