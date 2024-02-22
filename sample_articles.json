@@ -1,0 +1,58 @@
+{
+    "Politics": [
+        {
+            "title": "New Policy Initiatives Under Discussion",
+            "content": "Content about new policy initiatives...",
+            "author": "Jane Doe",
+            "date": "2024-02-20"
+        },
+        {
+            "title": "Election Campaigns Hit Their Stride",
+            "content": "Content about election campaigns...",
+            "author": "John Smith",
+            "date": "2024-02-19"
+        }
+    ],
+    "Economy": [
+        {
+            "title": "Stock Market Hits Record High",
+            "content": "Content about stock market records...",
+            "author": "Alice Johnson",
+            "date": "2024-02-18"
+        },
+        {
+            "title": "Unemployment Rates Drop",
+            "content": "Content about unemployment rates...",
+            "author": "Bob Brown",
+            "date": "2024-02-17"
+        }
+    ],
+    "Health": [
+        {
+            "title": "New Advances in Healthcare",
+            "content": "Content about healthcare advances...",
+            "author": "Clara White",
+            "date": "2024-02-16"
+        },
+        {
+            "title": "Global Health Concerns Addressed",
+            "content": "Content about global health...",
+            "author": "Derek Black",
+            "date": "2024-02-15"
+        }
+    ],
+    "Technology": [
+        {
+            "title": "Tech Companies Release New Devices",
+            "content": "Content about new tech devices...",
+            "author": "Emma Green",
+            "date": "2024-02-14"
+        },
+        {
+            "title": "Breakthrough in Renewable Energy Tech",
+            "content": "Content about renewable energy...",
+            "author": "Frank Blue",
+            "date": "2024-02-13"
+        }
+    ]
+}
