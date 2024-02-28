@@ -2,9 +2,16 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import fs from 'fs';
 import openai from './config/open-ai.js'; // Adjust the path as necessary
+import cors from 'cors'; // If you're using ES Modules
 
 const app = express();
 app.use(bodyParser.json()); // for parsing application/json
+
+
+app.use(cors({
+  origin: 'http://localhost:8080', // Only allow requests from this origin
+  methods: ['GET', 'POST'], // Only allow these methods
+}));
 
 // Function to check FAQs
 function checkSubscriptionFAQs(userInput) {
