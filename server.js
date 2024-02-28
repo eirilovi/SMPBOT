@@ -1,7 +1,7 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const fs = require('fs');
-const openai = require('./config/open-ai.js'); // Ensure this path is correct and you have configured your OpenAI API key
+import express from 'express';
+import bodyParser from 'body-parser';
+import fs from 'fs';
+import openai from './config/open-ai.js'; // Adjust the path as necessary
 
 const app = express();
 app.use(bodyParser.json()); // for parsing application/json
