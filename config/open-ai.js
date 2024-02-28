@@ -7,5 +7,6 @@ const configuration = new Configuration({
 });
 
 const openai = new OpenAIApi(configuration);
+console.log("API Key:", process.env.OPENAI_API_KEY);
 
 export default openai;
