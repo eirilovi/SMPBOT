@@ -17,23 +17,49 @@ document.addEventListener('DOMContentLoaded', function () {
     return chatLi;
   }
 
-  // Fetch and display categories
-  const fetchAndDisplayCategories = () => {
-    fetch('http://localhost:3000/categories')
-      .then(response => response.json())
-      .then(categories => {
-        let message = `The categories available are: ${categories.join(', ')}. Which one are you interested in?`;
-        chatbox.appendChild(createChatLi(message, "incoming"));
+// Fetch and display categories
+const fetchAndDisplayCategories = () => {
+  fetch('http://localhost:3000/categories')
+    .then(response => response.json())
+    .then(categories => {
+      // Append a message asking which category the user is interested in
+      chatbox.appendChild(createChatLi("Which category are you interested in?", "incoming"));
+
+      if (categories.length) {
+        // Append a button for each category in separate chat bubbles
+        categories.forEach(category => {
+          const buttonHtml = `<button class="category-button" data-category="${category}">${category}</button>`;
+          chatbox.appendChild(createChatLi(buttonHtml, "incoming"));
+        });
+      } else {
+        chatbox.appendChild(createChatLi("There are no categories available at the moment.", "incoming"));
+      }
+
+      // Scroll to the latest message after adding the initial question
+      chatbox.scrollTop = chatbox.scrollHeight;
+
+      // Use setTimeout to defer adding event listeners until after the buttons have been added to the DOM
+      setTimeout(() => {
+        // Add event listeners to the newly created buttons
+        const categoryButtons = document.querySelectorAll('.category-button');
+        categoryButtons.forEach(button => {
+          button.addEventListener('click', function() {
+            const category = this.getAttribute('data-category');
+            displayArticlesForCategory(category);
+          });
+        });
+
+        // Scroll to the latest message after adding the buttons
         chatbox.scrollTop = chatbox.scrollHeight;
-        // Store the categories for later use
-        window.chatCategories = categories;
-      })
-      .catch(error => {
-        console.error('Error fetching categories:', error);
-        chatbox.appendChild(createChatLi("Sorry, I am unable to fetch categories at the moment.", "incoming"));
-        chatbox.scrollTop = chatbox.scrollHeight;
-      });
-  };
+      }, 0);
+    })
+    .catch(error => {
+      console.error('Error fetching categories:', error);
+      chatbox.appendChild(createChatLi("Sorry, I am unable to fetch categories at the moment.", "incoming"));
+      chatbox.scrollTop = chatbox.scrollHeight;
+    });
+};
+
 
   // Function to display articles for a category
 const displayArticlesForCategory = (category) => {
@@ -56,7 +82,7 @@ const generateResponse = (userMessage) => {
   const userMessageLower = userMessage.toLowerCase();
 
   // If the user asks for categories, fetch and display them
-  if (userMessageLower.includes("what categories are there")) {
+  if (userMessageLower.includes("What categories are there")) {
     fetchAndDisplayCategories();
   }
   // If userMessage is a category from the list, prompt for listing articles

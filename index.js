@@ -5,8 +5,16 @@ import openai from './config/open-ai.js';
 import cors from 'cors';
 import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const app = express();
+
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const port = 3000;
@@ -15,17 +23,8 @@ app.use(bodyParser.json()); // for parsing application/json
 app.use(cors()); // Enable CORS for all origins
 app.use(express.static("public")); // Serve static files
 
-app.get('/articles/:category', (req, res) => {
-  const category = req.params.category;
-  if (articlesData.hasOwnProperty(category)) {
-    res.json(articlesData[category]);
-  } else {
-    res.status(404).send({ message: 'Category not found' });
-  }
-});
-
-const articlesData = JSON.parse(fs.readFileSync(path.join(__dirname, 'sample_articles.json'), 'utf8'));
-const categories = Object.keys(articlesData);
+//const articlesData = JSON.parse(fs.readFileSync(path.join(__dirname, 'sample_articles.json'), 'utf8'));
+//const categories = Object.keys(articlesData);
 let chatHistory = []; // Store the chat history
 
 // Function to check FAQs
@@ -47,20 +46,45 @@ function checkSubscriptionFAQs(userInput) {
   return ""; // Return an empty string if no FAQ matches
 }
 
-// Endpoint to get categories
-app.get('/categories', (req, res) => {
+app.get('/categories', async (req, res) => {
+  const { data, error } = await supabase
+    .from('Articles') // Matches the table name in Supabase
+    .select('category'); // Matches the column name in Supabase
+
+  if (error) {
+    console.error('Error fetching categories:', error);
+    return res.status(500).send('Error fetching categories');
+  }
+
+  // Log raw data for debugging
+  console.log('Raw data:', data);
+
+  // Extract and filter unique categories
+  const categories = Array.from(new Set(data.map(item => item.category))).filter(Boolean);
+
+  // Log categories for debugging
+  console.log('Categories:', categories);
+
   res.json(categories);
 });
 
-// Endpoint to get articles by category
-app.get('/articles/:category', (req, res) => {
-  const category = req.params.category;
-  if (articlesData[category]) {
-    res.json(articlesData[category]);
-  } else {
-    res.status(404).send('Category not found');
+// Endpoint to get articles by category from Supabase
+app.get('/Articles/:category', async (req, res) => {
+  const { category } = req.params;
+  const { data, error } = await supabase
+    .from('Articles')
+    .select('*')
+    .eq('category', category);
+
+  if (error) {
+    console.error(error);
+    return res.status(500).send('Error fetching Articles');
   }
+
+  res.json(data);
 });
+
+
 
 // Endpoint to process questions
 app.post('/ask', async (req, res) => {
