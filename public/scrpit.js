@@ -5,7 +5,9 @@ document.addEventListener('DOMContentLoaded', function () {
   const chatInput = document.querySelector(".chat-input textarea");
   const sendChatBtn = document.querySelector(".chat-input span");
   const chatbox = document.querySelector(".chatbox");
-
+  const chatbotToggler = document.querySelector(".chatbot-toggler");
+  const chatbot = document.querySelector(".chatbot");
+  
   const createChatLi = (message, className) => {
     const chatLi = document.createElement("li");
     chatLi.classList.add("chat", className);
@@ -13,6 +15,13 @@ document.addEventListener('DOMContentLoaded', function () {
     chatLi.innerHTML = chatContent;
     return chatLi;
   }
+      
+    // Function to toggle the chat window
+    chatbotToggler.addEventListener('click', function() {
+      chatbot.classList.toggle("show-chatbot");
+    });
+  
+
 
 // Fetch and display categories
 const fetchAndDisplayCategories = () => {
