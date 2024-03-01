@@ -31,57 +31,60 @@ const createChatLi = (message, className) => {
   
   return chatLi;
 };
-
   
-  // Define the createFaqButtons function
-  const createFaqButtons = () => {
-    // Check if FAQ buttons have already been created to prevent duplicates
-    if (chatbox.querySelector('.faq-button')) {
-      return; // FAQ buttons already exist, so don't create them again
-    }
-    
+// Define the createFaqButtons function
+const createFaqButtons = () => {
+  // Check if FAQ buttons have already been created to prevent duplicates
+  if (chatbox.querySelector('.faq-button')) {
+    return; // FAQ buttons already exist, so don't create them again
+  }
 
-    const faqs = [
-      { text: "How to Subscribe", pattern: "how to subscribe" },
-      { text: "Subscription Plans", pattern: "what are the subscription plans" },
-      { text: "Cancel Subscription", pattern: "how to cancel subscription" },
-      { text: "Access Subscriber Content", pattern: "how can I access subscriber content" }
-    ];
-        // Create container div for FAQ buttons
-    const buttonsContainer = document.createElement('div');
-    buttonsContainer.classList.add('faq-buttons-container');
+  const faqs = [
+    { text: "How to Subscribe", pattern: "how to subscribe" },
+    { text: "Subscription Plans", pattern: "what are the subscription plans" },
+    { text: "Cancel Subscription", pattern: "how to cancel subscription" },
+    { text: "Access Subscriber Content", pattern: "how can I access subscriber content" }
+  ];
 
-    faqs.forEach(faq => {
-      const button = document.createElement('button');
-      button.classList.add('faq-button');
-      button.setAttribute('data-pattern', faq.pattern);
-      button.textContent = faq.text;
-      buttonsContainer.appendChild(button);
+  // Create container div for FAQ buttons
+  const buttonsContainer = document.createElement('div');
+  buttonsContainer.classList.add('faq-buttons-container');
+
+  faqs.forEach(faq => {
+    const button = document.createElement('button');
+    button.classList.add('faq-button', 'category-button'); // Apply both classes for styling
+    button.setAttribute('data-pattern', faq.pattern);
+    button.textContent = faq.text;
+    buttonsContainer.appendChild(button);
+  });
+
+  chatbox.appendChild(createChatLi(buttonsContainer, "incoming"));
+  chatbox.scrollTop = chatbox.scrollHeight;
+
+  // Attach event listeners to FAQ buttons
+  const faqButtons = chatbox.querySelectorAll('.faq-button');
+  faqButtons.forEach(button => {
+    button.addEventListener('click', function() {
+      const pattern = this.getAttribute('data-pattern');
+      generateResponse(pattern); // Process the FAQ pattern as a user message
     });
-
-    chatbox.appendChild(createChatLi(buttonsContainer.outerHTML, "incoming"));
+  });
+    // Append FAQ buttons to the chatbox
+    chatbox.appendChild(createChatLi(buttonsContainer, "incoming"));
     chatbox.scrollTop = chatbox.scrollHeight;
-
-    // Attach event listeners to FAQ buttons
-    const faqButtons = chatbox.querySelectorAll('.faq-button');
-    faqButtons.forEach(button => {
-      button.addEventListener('click', function() {
-        const pattern = this.getAttribute('data-pattern');
-        generateResponse(pattern); // Process the FAQ pattern as a user message
-      });
-    });
-  };
+  
+    // Add a message after the FAQ buttons
+    const clickButtonMessage = "Click on a box, or ask a question in the chat. :D";
+    chatbox.appendChild(createChatLi(clickButtonMessage, "incoming"));
+    chatbox.scrollTop = chatbox.scrollHeight;
+  
+};
 
   // Call createFaqButtons to create and append FAQ buttons once
   createFaqButtons();
 
 // Fetch and display categories
 const fetchAndDisplayCategories = () => {
-  // Prevent duplicate category buttons
-  if (chatbox.querySelector('.category-button')) {
-    return; // Category buttons already exist
-  }
-
   fetch('http://localhost:3000/categories')
     .then(response => response.json())
     .then(categories => {
