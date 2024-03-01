@@ -6,49 +6,110 @@ document.addEventListener('DOMContentLoaded', function () {
   const sendChatBtn = document.querySelector(".chat-input span");
   const chatbox = document.querySelector(".chatbox");
 
-  const createChatLi = (message, className) => {
-    const chatLi = document.createElement("li");
-    chatLi.classList.add("chat", className);
-    let chatContent = className === "outgoing" ? `<p>${message}</p>` : `<span class="material-symbols-outlined">smart_toy</span><p>${message}</p>`;
-    chatLi.innerHTML = chatContent;
-    return chatLi;
+// Define the createChatLi function
+const createChatLi = (message, className) => {
+  const chatLi = document.createElement("li");
+  chatLi.classList.add("chat", className);
+  
+  // If the message is an element (like our buttons container), append it directly
+  if (message instanceof Element) {
+    chatLi.appendChild(message);
+  } else if (message) { // Only create the <p> if there is a message
+    // Assume it's text content and create a <p> for it
+    const chatContent = document.createElement("p");
+    chatContent.innerHTML = message;
+    if(className === "outgoing") {
+      chatLi.appendChild(chatContent);
+    } else {
+      const icon = document.createElement("span");
+      icon.classList.add("material-symbols-outlined");
+      icon.textContent = "smart_toy";
+      chatLi.appendChild(icon);
+      chatLi.appendChild(chatContent);
+    }
   }
+  
+  return chatLi;
+};
+
+  
+  // Define the createFaqButtons function
+  const createFaqButtons = () => {
+    // Check if FAQ buttons have already been created to prevent duplicates
+    if (chatbox.querySelector('.faq-button')) {
+      return; // FAQ buttons already exist, so don't create them again
+    }
+    
+
+    const faqs = [
+      { text: "How to Subscribe", pattern: "how to subscribe" },
+      { text: "Subscription Plans", pattern: "what are the subscription plans" },
+      { text: "Cancel Subscription", pattern: "how to cancel subscription" },
+      { text: "Access Subscriber Content", pattern: "how can I access subscriber content" }
+    ];
+        // Create container div for FAQ buttons
+    const buttonsContainer = document.createElement('div');
+    buttonsContainer.classList.add('faq-buttons-container');
+
+    faqs.forEach(faq => {
+      const button = document.createElement('button');
+      button.classList.add('faq-button');
+      button.setAttribute('data-pattern', faq.pattern);
+      button.textContent = faq.text;
+      buttonsContainer.appendChild(button);
+    });
+
+    chatbox.appendChild(createChatLi(buttonsContainer.outerHTML, "incoming"));
+    chatbox.scrollTop = chatbox.scrollHeight;
+
+    // Attach event listeners to FAQ buttons
+    const faqButtons = chatbox.querySelectorAll('.faq-button');
+    faqButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        const pattern = this.getAttribute('data-pattern');
+        generateResponse(pattern); // Process the FAQ pattern as a user message
+      });
+    });
+  };
+
+  // Call createFaqButtons to create and append FAQ buttons once
+  createFaqButtons();
 
 // Fetch and display categories
 const fetchAndDisplayCategories = () => {
+  // Prevent duplicate category buttons
+  if (chatbox.querySelector('.category-button')) {
+    return; // Category buttons already exist
+  }
+
   fetch('http://localhost:3000/categories')
     .then(response => response.json())
     .then(categories => {
-      // Append a message asking which category the user is interested in
-      chatbox.appendChild(createChatLi("Which category are you interested in?", "incoming"));
-
       if (categories.length) {
-        // Append a button for each category in separate chat bubbles
+        const buttonsContainer = document.createElement('div');
+        buttonsContainer.classList.add('category-buttons-container');
+        
         categories.forEach(category => {
-          const buttonHtml = `<button class="category-button" data-category="${category}">${category}</button>`;
-          chatbox.appendChild(createChatLi(buttonHtml, "incoming"));
+          const button = document.createElement('button');
+          button.classList.add('category-button');
+          button.textContent = category;
+          button.setAttribute('data-category', category);
+          buttonsContainer.appendChild(button);
         });
-      } else {
-        chatbox.appendChild(createChatLi("There are no categories available at the moment.", "incoming"));
-      }
-
-      // Scroll to the latest message after adding the initial question
-      chatbox.scrollTop = chatbox.scrollHeight;
-
-      // Use setTimeout to defer adding event listeners until after the buttons have been added to the DOM
-      setTimeout(() => {
-        // Add event listeners to the newly created buttons
-        const categoryButtons = document.querySelectorAll('.category-button');
-        categoryButtons.forEach(button => {
+        
+        chatbox.appendChild(createChatLi(buttonsContainer, "incoming"));
+        
+        // Attach event listeners to the newly created category buttons
+        buttonsContainer.querySelectorAll('.category-button').forEach(button => {
           button.addEventListener('click', function() {
             const category = this.getAttribute('data-category');
             displayArticlesForCategory(category);
           });
         });
-
-        // Scroll to the latest message after adding the buttons
-        chatbox.scrollTop = chatbox.scrollHeight;
-      }, 0);
+      } else {
+        chatbox.appendChild(createChatLi("There are no categories available at the moment.", "incoming"));
+      }
+      chatbox.scrollTop = chatbox.scrollHeight;
     })
     .catch(error => {
       console.error('Error fetching categories:', error);
@@ -56,7 +117,6 @@ const fetchAndDisplayCategories = () => {
       chatbox.scrollTop = chatbox.scrollHeight;
     });
 };
-
 
   // Function to display articles for a category
 const displayArticlesForCategory = (category) => {
@@ -122,25 +182,34 @@ const generateResponse = (userMessage) => {
 }
 
 
-  const handleChat = () => {
-    let userMessage = chatInput.value.trim();
+const handleChat = () => {
+  let userMessage = chatInput.value.trim();
+  if (!userMessage) return;
 
-    if (!userMessage) return;
+  chatbox.appendChild(createChatLi(userMessage, "outgoing"));
+  chatbox.scrollTop = chatbox.scrollHeight;
+  generateResponse(userMessage); // Send user message to the server and handle response
+  chatInput.value = ''; // Clear input field after sending
+};
 
-    chatbox.appendChild(createChatLi(userMessage, "outgoing"));
-    chatbox.scrollTop = chatbox.scrollHeight;
-    generateResponse(userMessage); // Send user message to the server and handle response
+// Event listeners for sending a message
+sendChatBtn.addEventListener("click", handleChat);
+chatInput.addEventListener("keypress", function(event) {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    sendChatBtn.click();
+  }
+});
 
-    chatInput.value = ''; // Clear input field
-  };
+sendChatBtn.addEventListener("click", handleChat);
 
-  sendChatBtn.addEventListener("click", handleChat);
+// Handle enter key for sending a message
+chatInput.addEventListener("keypress", function(event) {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    console.log("Enter pressed"); // Debugging log
+    sendChatBtn.click();
+  }
+});
 
-  // Handle enter key for sending a message
-  chatInput.addEventListener("keypress", function(event) {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      sendChatBtn.click();
-    }
-  });
 });

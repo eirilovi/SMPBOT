@@ -23,7 +23,7 @@ body{
   justify-content: center;
   outline: none;
   cursor: pointer;
-  background: blue;
+  background: #084c9c;
   border-radius: 50%;
 }
 .chatbot-toggler span{
@@ -58,7 +58,7 @@ body{
 
 
 .chatbot header{
-  background: blue;
+  background: #084c9c;
   padding: 16px 0;
   text-align: center;
 }
@@ -94,15 +94,18 @@ body{
   color: #fff;
   align-self: flex-end;
   justify-content: flex-end;
-  background: blue;
+  background: #084c9c;
   text-align: center;
   line-height: 32px;
   border-radius:4px;
   margin: 0 10px 7px 0;
-
-
-
 }
+
+/* Add this new rule to remove the background */
+.no-background {
+  background: none;
+}
+
 
 .chatbox .chat p {
   color: #fff;
@@ -110,8 +113,8 @@ body{
   font-size:0.95rem;
   padding: 12px 16px;
   border-radius: 10px 10px 0 10px;
-  background: blue;
-  
+  background: #084c9c;
+  margin: 5px; 
 }
 
 .chatbox .outgoing{
@@ -121,7 +124,7 @@ body{
 .chatbox .incoming p {
   color: black;
   background: #f2f2f2;
-  border-radius: 10px 10px 10px 0;
+  border-radius: 10px 10px 10px;
 }
 
 
@@ -149,7 +152,7 @@ body{
 .chat-input span{
   align-self: flex-end;
   height: 45px;
-  color: blue;
+  color: #084c9c;
   font-size: 1.35rem;
   cursor: pointer;
   visibility: hidden;
@@ -177,16 +180,85 @@ body{
   display: block;
 }
 
-.category-button {
+.chatbot-button {
   padding: 5px 10px;
   margin: 5px;
-  background-color: #007bff;
-  color: white;
+  background-color: #084c9c;
   border: none;
   border-radius: 5px;
   cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+/* Container for FAQ buttons to lay them out horizontally */
+.faq-buttons-container {
+  display: flex;
+  justify-content: space-between; /* Distribute space around items */
+  align-items: center; /* Align items vertically */
+  width: 100%;
+}
+
+.faq-button {
+  flex-grow: 1; /* Allow the buttons to grow and fill the container */
+  margin: 0 5px; /* Adjust the margin as needed for spacing between buttons */
+  width: 60px; /* Width for square shape */
+  height: 60px; /* Height for square shape */
+  padding: 0px; /* Padding inside the buttons */
+  margin: 2px; /* Margin around the buttons */
+  background-color: #084c9c; /* Button color */
+  color: white; /* Text color */
+  border: none;
+  border-radius: 5px; /* Rounded corners for aesthetics */
+  cursor: pointer;
+  transition: background-color 0.3s;
+  font-size: 0.65rem; /* Adjust font size as needed */
+  display: flex; /* Use flexbox for centering text */
+  justify-content: center; /* Center text horizontally */
+  align-items: center; /* Center text vertically */
+  text-align: center; /* Center text for browsers that don't support flexbox */
+}
+
+.faq-button:hover {
+  background-color: #062e5b; /* Darker color on hover */
+}
+
+/* Container for FAQ buttons to lay them out horizontally */
+.category-buttons-container {
+  display: flex;
+  justify-content: space-between; /* Distribute space around items */
+  align-items: center; /* Align items vertically */
+  width: 100%;
+}
+
+
+.category-button {
+  flex-grow: 1; /* Allow the buttons to grow and fill the container */
+  margin: 0 5px; /* Adjust the margin as needed for spacing between buttons */
+  width: 60px; /* Width for square shape */
+  height: 60px; /* Height for square shape */
+  padding: 0px; /* Padding inside the buttons */
+  margin: 2px; /* Margin around the buttons */
+  background-color: #084c9c; /* Button color */
+  color: white; /* Text color */
+  border: none;
+  border-radius: 5px; /* Rounded corners for aesthetics */
+  cursor: pointer;
+  transition: background-color 0.3s;
+  font-size: 0.65rem; /* Adjust font size as needed */
+  display: flex; /* Use flexbox for centering text */
+  justify-content: center; /* Center text horizontally */
+  align-items: center; /* Center text vertically */
+  text-align: center; /* Center text for browsers that don't support flexbox */
 }
 
 .category-button:hover {
-  background-color: #0056b3;
+  background-color: #062e5b; /* Darker color on hover */
+}
+
+/* Responsive adjustments for the category buttons */
+@media (max-width: 768px) {
+  .category-button {
+    width: auto; /* Let buttons take the width of their container */
+    margin: 5px 0; /* Adjust for vertical stacking */
+  }
 }
