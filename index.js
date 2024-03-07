@@ -84,6 +84,21 @@ app.get('/Articles/:category', async (req, res) => {
   res.json(data);
 });
 
+//Endpoint to get articles by tags from Supabase
+app.get('/Articles/:tags', async (req, res) => {
+  const { tags } = req.params;
+  const { data, error } = await supabase
+    .from('Articles')
+    .select('*')
+    .eq('tags', tags);
+
+  if (error) {
+    console.error(error);
+    return res.status(500).send('Error fetching Articles');
+  }
+
+  res.json(data);
+});
 
 
 // Endpoint to process questions
