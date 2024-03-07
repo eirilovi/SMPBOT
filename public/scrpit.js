@@ -40,10 +40,10 @@ const createFaqButtons = () => {
   }
 
   const faqs = [
-    { text: "How to Subscribe", pattern: "how to subscribe" },
-    { text: "Subscription Plans", pattern: "what are the subscription plans" },
-    { text: "Cancel Subscription", pattern: "how to cancel subscription" },
-    { text: "Access Subscriber Content", pattern: "how can I access subscriber content" }
+    { text: "Bli Abonnent", pattern: "bli abonnent" },
+    { text: "Relevante artikler", pattern: "relevante artikler" },
+    { text: "Artikler for Ungdom", pattern: "artikler ungdom" },
+    { text: "Kategorier", pattern: "hvilke kategorier" }
   ];
 
   // Create container div for FAQ buttons
@@ -74,7 +74,7 @@ const createFaqButtons = () => {
     chatbox.scrollTop = chatbox.scrollHeight;
   
     // Add a message after the FAQ buttons
-    const clickButtonMessage = "Click on a box, or ask a question in the chat. :D";
+    const clickButtonMessage = "Trykk på en av knappene, eller spør et spørsmål i chatten. :D";
     chatbox.appendChild(createChatLi(clickButtonMessage, "incoming"));
     chatbox.scrollTop = chatbox.scrollHeight;
   
@@ -102,11 +102,40 @@ const fetchAndDisplayCategories = () => {
         
         chatbox.appendChild(createChatLi(buttonsContainer, "incoming"));
         
-        // Attach event listeners to the newly created category buttons
+        // Attach event listeners to the category buttons
         buttonsContainer.querySelectorAll('.category-button').forEach(button => {
           button.addEventListener('click', function() {
-            const category = this.getAttribute('data-category');
-            displayArticlesForCategory(category);
+            selectedCategory = this.getAttribute('data-category');
+            chatbox.appendChild(createChatLi(`Du valgte kategori: ${selectedCategory}. Hva ønsker du jeg skal gjøre?`, "incoming"));
+
+            // Create and display the three new buttons
+            const optionsContainer = document.createElement('div');
+            optionsContainer.classList.add('faq-buttons-container'); // Reuse the class for horizontal layout
+            
+            const options = [
+              { text: "Nyeste artikler", action: "latest" },
+              { text: "Viktigste artikler", action: "important" },
+              { text: "Tilfeldig artikkel", action: "random" }
+            ];
+            
+            options.forEach(opt => {
+              const optionButton = document.createElement('button');
+              optionButton.classList.add('option-button', 'faq-button'); // Apply both 'option-button' and 'faq-button' classes for styling and layout
+              optionButton.textContent = opt.text;
+              optionButton.setAttribute('data-action', opt.action);
+              optionsContainer.appendChild(optionButton);
+            });
+
+            chatbox.appendChild(createChatLi(optionsContainer, "incoming"));
+            chatbox.scrollTop = chatbox.scrollHeight;
+
+            // Attach event listeners to the new option buttons
+            optionsContainer.querySelectorAll('.option-button').forEach(optionButton => {
+              optionButton.addEventListener('click', function() {
+                const action = this.getAttribute('data-action');
+                handleCategoryAction(selectedCategory, action);
+              });
+            });
           });
         });
       } else {
@@ -120,6 +149,9 @@ const fetchAndDisplayCategories = () => {
       chatbox.scrollTop = chatbox.scrollHeight;
     });
 };
+
+
+
 
   // Function to display articles for a category
 const displayArticlesForCategory = (category) => {
@@ -137,12 +169,48 @@ const displayArticlesForCategory = (category) => {
     });
 };
 
+// Function to handle actions for a selected category
+const handleCategoryAction = (category, action) => {
+  let endpoint = '';
+  switch (action) {
+    case 'latest':
+      endpoint = `/Articles/${category}/latest`;
+      break;
+    case 'important':
+      endpoint = `/Articles/${category}/important`;
+      break;
+    case 'random':
+      endpoint = `/Articles/${category}/random`;
+      break;
+    default:
+      chatbox.appendChild(createChatLi("Unknown action.", "incoming"));
+      return;
+  }
+
+  fetch(`http://localhost:3000${endpoint}`)
+    .then(response => response.json())
+    .then(articles => {
+      if (articles.length === 0) {
+        chatbox.appendChild(createChatLi("There are no articles available for this selection.", "incoming"));
+      } else {
+        let message = articles.map(article => `- ${article.title}`).join('\n');
+        chatbox.appendChild(createChatLi(message, "incoming"));
+      }
+      chatbox.scrollTop = chatbox.scrollHeight;
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      chatbox.appendChild(createChatLi("Sorry, there was an error fetching the articles.", "incoming"));
+    });
+};
+
+
 // Modify the generateResponse function
 const generateResponse = (userMessage) => {
   const userMessageLower = userMessage.toLowerCase();
 
   // If the user asks for categories, fetch and display them
-  if (userMessageLower.includes("what categories are there")) {
+  if (userMessageLower.includes("hvilke kategorier")) {
     fetchAndDisplayCategories();
   }
   // If userMessage is a category from the list, prompt for listing articles

@@ -25,25 +25,75 @@ app.use(express.static("public")); // Serve static files
 
 //const articlesData = JSON.parse(fs.readFileSync(path.join(__dirname, 'sample_articles.json'), 'utf8'));
 //const categories = Object.keys(articlesData);
-let chatHistory = []; // Store the chat history
+let chatHistory = [
+  { role: 'system', content: 'You are an AI chatbot created for sunnmørsposten, a norwegian news channel. You WILL NOT answer any questions that a news based bot would not answer. This includes but is not related to: "Medical help, jokes, silly stuff, geography, cooking". If you receive an inappropriate prompt, you will let the user know that you only provide answers based on news, or nagivating the sunnmørsposten website. You will only communicate in "Nynorsk", also known as New Norwegian' }
+];; // Store the chat history
 
 // Function to check FAQs
-function checkSubscriptionFAQs(userInput) {
-  const subscribeRegex = /how.*subscribe/i;
-  const plansRegex = /subscription.*plans/i;
-  const cancelSubscriptionRegex = /cancel.*subscription/i;
-  const accessContentRegex = /can.*access.*subscriber.*content/i;
+async function checkSubscriptionFAQs(userInput) {
+  const subscribeRegex = /bli *abonnent/i;
+  const plansRegex = /relevante *artikler/i;
+  const cancelSubscriptionRegex = /artikler *ungdom/i;
+  const accessContentRegex = /hvilke *kategorier/i;
 
   if (subscribeRegex.test(userInput)) {
-    return "Press '+Få tilgang' in the top right corner of the menu-bar...";
+    return 'Om du ønsker å bli abonnent, følg denne lenken: <a href="https://www.smp.no/dakapo/productpage/SPO/?source=topheader_A" target="_blank">Trykk her</a>';
   } else if (plansRegex.test(userInput)) {
-    return "The subscription plans available are Digital, Complete, Young (Under 34), and Weekend papers + Digital.";
+    const articlesList = await fetchRelevantArticles(); // Fetch relevant articles
+    return articlesList;
   } else if (cancelSubscriptionRegex.test(userInput)) {
-    return "To cancel your subscription, please visit https://minside.smp.no/endre-abonnement and select 'Stopp abonnement'.";
+    const youthArticlesList = await fetchYouthArticles(); // Fetch articles for "Ungdom"
+    return youthArticlesList;
   } else if (accessContentRegex.test(userInput)) {
-    return "If you can't access subscriber-only content, it may mean you don't have an active subscription...";
+    return 'Du kan kontakte oss her: <a href="https://www.smp.no/nyheter/i/oWbOOB/kontakt-oss" target="_blank">Trykk her</a>';
   }
   return ""; // Return an empty string if no FAQ matches
+}
+
+async function fetchRelevantArticles() {
+  try {
+      const { data, error } = await supabase
+          .from('Articles')
+          .select('title')
+          .limit(5);
+
+      if (error) {
+          throw error;
+      }
+
+      if (data && data.length > 0) {
+          // Join the article titles with two newlines for spacing
+          return data.map(article => `- ${article.title}`).join('\<br><br>');
+      } else {
+          return "Det er for tiden ingen relevante artikler å vise.";
+      }
+  } catch (error) {
+      console.error('Error fetching articles:', error);
+      return "Det oppsto en feil under henting av artikler.";
+  }
+}
+
+async function fetchYouthArticles() {
+  try {
+      const { data, error } = await supabase
+          .from('Articles')
+          .select('title')
+          .ilike('tags', '%Ungdom%')
+          .limit(5);
+
+      if (error) {
+          throw error;
+      }
+
+      if (data && data.length > 0) {
+          return data.map(article => `- ${article.title}`).join('<br><br>');
+      } else {
+          return "Det er for tiden ingen artikler for Ungdom å vise.";
+      }
+  } catch (error) {
+      console.error('Error fetching youth articles:', error);
+      return "Det oppsto en feil under henting av artikler for Ungdom.";
+  }
 }
 
 app.get('/categories', async (req, res) => {
@@ -85,11 +135,61 @@ app.get('/Articles/:category', async (req, res) => {
 });
 
 
+app.get('/Articles/:category/latest', async (req, res) => {
+  const { category } = req.params;
+  const { data, error } = await supabase
+    .from('Articles')
+    .select('*')
+    .eq('category', category)
+    .order('publication_date', { ascending: false })
+    .limit(3);
+
+  if (error) {
+    console.error(error);
+    return res.status(500).send('Error fetching latest Articles');
+  }
+
+  res.json(data);
+});
+
+app.get('/Articles/:category/important', async (req, res) => {
+  const { category } = req.params;
+  const { data, error } = await supabase
+    .from('Articles')
+    .select('*')
+    .eq('category', category)
+    .order('viktighetsgrad', { ascending: false })
+    .limit(3);
+
+  if (error) {
+    console.error('Error fetching important articles:', error);
+    return res.status(500).send('Error fetching important articles');
+  }
+
+  res.json(data);
+});
+
+app.get('/Articles/:category/random', async (req, res) => {
+  const { category } = req.params;
+  const { data, error } = await supabase
+    .from('Articles')
+    .select('*')
+    .eq('category', category)
+    .order('RANDOM()')
+    .limit(1);
+
+  if (error) {
+    console.error('Error fetching random article:', error);
+    return res.status(500).send('Error fetching random article');
+  }
+
+  res.json(data);
+});
 
 // Endpoint to process questions
 app.post('/ask', async (req, res) => {
   const userInput = req.body.message;
-  let responseText = checkSubscriptionFAQs(userInput); // Check FAQs first
+  let responseText = await checkSubscriptionFAQs(userInput); // Check FAQs first
 
   // Add user's input to chat history
   chatHistory.push({ role: 'user', content: userInput });
