@@ -1,9 +1,33 @@
-import openai from './config/open-ai.js';
-import readlineSync from 'readline-sync';
-import colors from 'colors';
+import express from 'express';
+import bodyParser from 'body-parser';
 import fs from 'fs';
+import openai from './config/open-ai.js';
+import cors from 'cors';
+import path, { dirname } from 'path';
+import { fileURLToPath } from 'url';
+import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
+dotenv.config();
 
-// Regular expressions for each question
+const app = express();
+
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const port = 3000;
+
+app.use(bodyParser.json()); // for parsing application/json
+app.use(cors()); // Enable CORS for all origins
+app.use(express.static("public")); // Serve static files
+
+//const articlesData = JSON.parse(fs.readFileSync(path.join(__dirname, 'sample_articles.json'), 'utf8'));
+//const categories = Object.keys(articlesData);
+let chatHistory = []; // Store the chat history
+
+// Function to check FAQs
 function checkSubscriptionFAQs(userInput) {
   const subscribeRegex = /how.*subscribe/i;
   const plansRegex = /subscription.*plans/i;
@@ -11,132 +35,94 @@ function checkSubscriptionFAQs(userInput) {
   const accessContentRegex = /can.*access.*subscriber.*content/i;
 
   if (subscribeRegex.test(userInput)) {
-    console.log(`Bot: Press "+Få tilgang" in the top right corner of the menu-bar. Then select your preferred subscription. Then select your payment method. Then log in to your "Schibsted" account. After payment, you should have a subscription.`);
-    return true;
+    return "Press '+Få tilgang' in the top right corner of the menu-bar...";
   } else if (plansRegex.test(userInput)) {
-    console.log(`Bot: The subscription plans available are Digital, Complete, Young (Under 34), and Weekend papers + Digital.`);
-    return true;
+    return "The subscription plans available are Digital, Complete, Young (Under 34), and Weekend papers + Digital.";
   } else if (cancelSubscriptionRegex.test(userInput)) {
-    console.log(`Bot: To cancel your subscription, please visit https://minside.smp.no/endre-abonnement and select "Stopp abonnement".`);
-    return true;
+    return "To cancel your subscription, please visit https://minside.smp.no/endre-abonnement and select 'Stopp abonnement'.";
   } else if (accessContentRegex.test(userInput)) {
-    console.log(`Bot: If you can't access subscriber-only content, it may mean that you don't have an active subscription, or that your subscription has not been fully prepared yet. If the problem persists, please contact us at abonnement@smp.no.`);
-    return true;
+    return "If you can't access subscriber-only content, it may mean you don't have an active subscription...";
   }
-  // If none of the regular expressions match, return false to indicate no match was found
-  return false;
+  return ""; // Return an empty string if no FAQ matches
 }
 
-async function main() {
-  console.log(colors.bold.green('Welcome to the Chatbot Program!'));
+app.get('/categories', async (req, res) => {
+  const { data, error } = await supabase
+    .from('Articles') // Matches the table name in Supabase
+    .select('category'); // Matches the column name in Supabase
 
-  // Load articles from the JSON file
-  const articlesData = JSON.parse(fs.readFileSync('./sample_articles.json', 'utf8'));
-
-  // Define the list of categories
-  const categories = Object.keys(articlesData);
-
-  // Ask the question and present the list of categories to choose from
-  console.log(colors.bold.green('Please select a category you are interested in:'));
-  const selectedCategoryIndex = readlineSync.keyInSelect(categories, 'Categories: ', {
-    cancel: 'None of the above'
-  });
-
-  // Initialize conversation history
-  const chatHistory = [];
-  let selectedCategory;
-
-  // Check if a category was selected and add it to the chat history
-  if (selectedCategoryIndex !== -1) {
-    selectedCategory = categories[selectedCategoryIndex];
-    console.log(colors.bold.green(`You selected ${selectedCategory}.`));
-    // Add a system-level message to the chat history
-    chatHistory.push({ role: 'system', content: `The user is interested in the category ${selectedCategory}.` });
+  if (error) {
+    console.error('Error fetching categories:', error);
+    return res.status(500).send('Error fetching categories');
   }
 
-  console.log(colors.bold.green('You can start chatting with the bot.'));
+  // Log raw data for debugging
+  console.log('Raw data:', data);
 
-  const listArticlesRegex = /list.*articles/i;
+  // Extract and filter unique categories
+  const categories = Array.from(new Set(data.map(item => item.category))).filter(Boolean);
 
-  let awaitingYesNoResponse = false;
-  let lastUserInput = '';
-  
-  while (true) {
-    let userInput;
-    if (!awaitingYesNoResponse) {
-      userInput = readlineSync.question(colors.yellow('You: '));
-      lastUserInput = userInput; // Store the last user input
-    } else {
-      userInput = readlineSync.question(colors.yellow("Please respond with 'Yes' or 'No': "));
-    }
-  
-    // Check if the user wants to exit the chat
-    if (userInput.toLowerCase() === 'exit') {
-      console.log(colors.green('Exiting the Chatbot Program. Goodbye!'));
-      break;
-    }
-  
-    if (!awaitingYesNoResponse) {
-      // Check if the input matches any hard-coded responses
-      if (checkSubscriptionFAQs(userInput)) {
-        continue;
-      }
-  
-      if (listArticlesRegex.test(userInput) && selectedCategory) {
-        const articles = articlesData[selectedCategory];
-        console.log(`Bot: Here are the articles under ${selectedCategory}:`);
-        articles.forEach(article => {
-          console.log(`- ${article.title}`);
-        });
-        continue; // Ensure to continue the loop after listing articles
-      }
-    }
-  
-    if (awaitingYesNoResponse) {
-      if (userInput.toLowerCase() === 'yes') {
-        awaitingYesNoResponse = false; // Reset the flag
-        try {
-          // Interact with ChatGPT using the last stored user input
-          const messages = chatHistory.map(({ role, content }) => ({
-            role,
-            content,
-          }));
-  
-          messages.push({ role: 'user', content: lastUserInput });
-  
-          const completion = await openai.createChatCompletion({
-            model: 'gpt-3.5-turbo',
-            messages: messages,
-          });
-  
-          const completionText = completion.data.choices[0].message.content;
-          console.log(colors.green('Bot: ') + completionText);
-  
-          chatHistory.push({ role: 'user', content: lastUserInput });
-          chatHistory.push({ role: 'assistant', content: completionText });
-        } catch (error) {
-          console.error(colors.red(`Error: ${error.message}`));
-          console.log(colors.yellow("There was an error processing your request. Would you like to try again? (Yes/No)"));
-          const tryAgain = readlineSync.question(colors.yellow('You: '));
-          if (tryAgain.toLowerCase() !== 'yes') {
-            console.log(colors.green('Goodbye!'));
-            break; // Exit the loop and the program
-          }
-        }
-      } else if (userInput.toLowerCase() === 'no') {
-        awaitingYesNoResponse = false; // Reset the flag
-        continue; // Skip the rest of the loop to allow new user input
-      } else {
-        console.log(colors.red("Please respond with 'Yes' or 'No'."));
-        continue; // Stay in the loop until a valid response is received
-      }
-    } else {
-      console.log(colors.yellow("It appears I don't have an answer for this question. You might want to check for typos in your message. Alternatively, you can speak to ChatGPT. Do you want to continue to ChatGPT? (Yes/No)"));
-      awaitingYesNoResponse = true; // Set the flag as we now await a "yes" or "no"
+  // Log categories for debugging
+  console.log('Categories:', categories);
+
+  res.json(categories);
+});
+
+// Endpoint to get articles by category from Supabase
+app.get('/Articles/:category', async (req, res) => {
+  const { category } = req.params;
+  const { data, error } = await supabase
+    .from('Articles')
+    .select('*')
+    .eq('category', category);
+
+  if (error) {
+    console.error(error);
+    return res.status(500).send('Error fetching Articles');
+  }
+
+  res.json(data);
+});
+
+
+
+// Endpoint to process questions
+app.post('/ask', async (req, res) => {
+  const userInput = req.body.message;
+  let responseText = checkSubscriptionFAQs(userInput); // Check FAQs first
+
+  // Add user's input to chat history
+  chatHistory.push({ role: 'user', content: userInput });
+
+  if (!responseText) { // If not an FAQ, proceed with OpenAI
+    try {
+      const openAIResponse = await openai.createChatCompletion({
+        model: 'gpt-3.5-turbo',
+        messages: chatHistory,
+        max_tokens: 500,
+      });
+      responseText = openAIResponse.data.choices[0].message.content?.trim();
+      // Add OpenAI's response to chat history
+      chatHistory.push({ role: 'assistant', content: responseText });
+    } catch (error) {
+      console.error("Error with OpenAI:", error);
+      responseText = "Sorry, I encountered an error processing your request.";
     }
   }
-  
-}
 
-// Call the main function to start the chatbot
-main();
+  res.json({ response: responseText }); // Send the response
+});
+
+// Reset chat history
+app.post('/reset', (req, res) => {
+  chatHistory = []; // Clear the chat history
+  res.send('Chat history has been reset.');
+});
+
+app.get("", (req, res) => {
+  res.sendFile(path.join(__dirname, '/index.html'));
+});
+
+app.listen(port, () => {
+  console.log(`Server listening at http://localhost:${port}`);
+});
