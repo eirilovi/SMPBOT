@@ -15,6 +15,13 @@ document.addEventListener('DOMContentLoaded', function () {
     chatLi.innerHTML = chatContent;
     return chatLi;
   }
+
+  fetch('header.component.html')
+    .then(response => response.text())
+    .then(data => {
+        document.getElementById('header-placeholder').innerHTML = data;
+    })
+    .catch(error => console.error('Error loading the header component:', error));
       
     // Function to toggle the chat window
     chatbotToggler.addEventListener('click', function() {

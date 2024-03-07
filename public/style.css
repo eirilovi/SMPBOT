@@ -23,7 +23,7 @@ body{
   justify-content: center;
   outline: none;
   cursor: pointer;
-  background: blue;
+  background: #084c9c;
   border-radius: 50%;
 }
 .chatbot-toggler span{
@@ -58,7 +58,7 @@ body{
 
 
 .chatbot header{
-  background: blue;
+  background: #084c9c;
   padding: 16px 0;
   text-align: center;
 }
@@ -94,7 +94,7 @@ body{
   color: #fff;
   align-self: flex-end;
   justify-content: flex-end;
-  background: blue;
+  background: #084c9c;
   text-align: center;
   line-height: 32px;
   border-radius:4px;
@@ -117,7 +117,7 @@ body{
   font-size:0.95rem;
   padding: 12px 16px;
   border-radius: 10px 10px 0 10px;
-  background: blue;
+  background: #084c9c;
   
 }
 
@@ -156,7 +156,7 @@ body{
 .chat-input span{
   align-self: flex-end;
   height: 45px;
-  color: blue;
+  color: #084c9c;
   font-size: 1.35rem;
   cursor: pointer;
   visibility: hidden;
