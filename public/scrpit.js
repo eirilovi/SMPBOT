@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function () {
     return chatLi;
   }
 
-  fetch('header.component.html')
+  fetch('../header.component.html')
     .then(response => response.text())
     .then(data => {
         document.getElementById('header-placeholder').innerHTML = data;
