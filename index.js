@@ -171,20 +171,20 @@ app.get('/Articles/:category/important', async (req, res) => {
 
 app.get('/Articles/:category/random', async (req, res) => {
   const { category } = req.params;
-  const { data, error } = await supabase
-    .from('Articles')
-    .select('*')
-    .eq('category', category)
-    .order('RANDOM()')
-    .limit(1);
+  try {
+    let { data, error } = await supabase
+      .rpc('random_article', { cat: category })
 
-  if (error) {
+    if (error) throw error;
+
+    res.json(data);
+  } catch (error) {
     console.error('Error fetching random article:', error);
-    return res.status(500).send('Error fetching random article');
+    res.status(500).send('Error fetching random article');
   }
-
-  res.json(data);
 });
+
+
 
 // Endpoint to process questions
 app.post('/ask', async (req, res) => {
@@ -197,7 +197,7 @@ app.post('/ask', async (req, res) => {
   if (!responseText) { // If not an FAQ, proceed with OpenAI
     try {
       const openAIResponse = await openai.createChatCompletion({
-        model: 'gpt-3.5-turbo',
+        model: 'gpt-4-0125-preview',
         messages: chatHistory,
         max_tokens: 500,
       });

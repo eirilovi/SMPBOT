@@ -1,6 +1,6 @@
 # ChatGPT Chatbot
 
-This is a ChatGPT chatbot written in Node.js that runs in the terminal
+This is a ChatGPT chatbot created for Sunnmørsposten
 
 ## Usage
 
