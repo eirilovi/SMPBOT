@@ -5,7 +5,9 @@ document.addEventListener('DOMContentLoaded', function () {
   const chatInput = document.querySelector(".chat-input textarea");
   const sendChatBtn = document.querySelector(".chat-input span");
   const chatbox = document.querySelector(".chatbox");
-
+  const chatbotToggler = document.querySelector(".chatbot-toggler");
+  const chatbot = document.querySelector(".chatbot");
+  
 // Define the createChatLi function
 const createChatLi = (message, className) => {
   const chatLi = document.createElement("li");
@@ -82,6 +84,20 @@ const createFaqButtons = () => {
 
   // Call createFaqButtons to create and append FAQ buttons once
   createFaqButtons();
+
+  fetch('../header.component.html')
+    .then(response => response.text())
+    .then(data => {
+        document.getElementById('header-placeholder').innerHTML = data;
+    })
+    .catch(error => console.error('Error loading the header component:', error));
+      
+    // Function to toggle the chat window
+    chatbotToggler.addEventListener('click', function() {
+      chatbot.classList.toggle("show-chatbot");
+    });
+  
+
 
 // Fetch and display categories
 const fetchAndDisplayCategories = () => {
@@ -283,4 +299,70 @@ chatInput.addEventListener("keypress", function(event) {
   }
 });
 
+    chatbox.appendChild(createChatLi(userMessage, "outgoing"));
+    chatbox.scrollTop = chatbox.scrollHeight;
+    generateResponse(userMessage); // Send user message to the server and handle response
+
+    chatInput.value = ''; // Clear input field
+  };
+
+  sendChatBtn.addEventListener("click", handleChat);
+
+  // Handle enter key for sending a message
+  chatInput.addEventListener("keypress", function(event) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      sendChatBtn.click();
+    }
+  });
+
+  function navigateTo(path) {
+    // Assuming 'path' already includes the '.html' extension as needed
+    const url = `http://localhost:3000/${path}`; // Construct the full URL
+    
+    fetch(url)
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById('main-content').innerHTML = html;
+            window.history.pushState({}, '', url); // Update the URL displayed in the browser
+        })
+        .catch(error => console.error('Error fetching content:', error));
+}
+  
+  // Listen for click events on your navigation links/buttons
+  document.addEventListener('click', function(event) {
+    if (event.target.matches('.nav-link')) { // Replace with your actual selector
+      event.preventDefault();
+      const href = event.target.getAttribute('href');
+      navigateTo(href);
+    }
+  });
+  
+  // Handle back/forward browser navigation
+  window.addEventListener('popstate', function() {
+    navigateTo(window.location.pathname);
+  });
+
+  function addNavigationEventListeners() {
+    const navLinks = document.querySelectorAll('.nav-link');
+  
+    navLinks.forEach(link => {
+      link.addEventListener('click', function(event) {
+        event.preventDefault();
+        const path = this.getAttribute('href');
+        navigateTo(path);
+      });
+    });
+  }
+  fetch('../header.component.html')
+  .then(response => response.text())
+  .then(data => {
+    document.getElementById('header-placeholder').innerHTML = data;
+    addNavigationEventListeners(); // This will setup your click events after the header is loaded
+  })
+  .catch(error => console.error('Error loading the header component:', error));
+  
+
+
 });
+

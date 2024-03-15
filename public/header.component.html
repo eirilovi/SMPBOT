@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Header Example</title>
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+  }
+  
+  .header {
+    background-color: #084c9c; /* Dark blue color */
+    color: white;
+    padding: 30px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .header .logo {
+    margin-left: 20px;
+    font-size: 24px;
+    font-weight: bold;
+  }
+  
+  .header nav {
+    margin-right: 20px;
+  }
+
+  .header nav a {
+    color: white;
+    text-decoration: none;
+    margin: 0 10px;
+    font-size: 18px;
+  }
+  
+  .header nav a:hover {
+    text-decoration: underline;
+  }
+
+  .header .menu-toggle {
+    font-size: 24px;
+    padding-right: 20px;
+    display: none; /* Hidden by default */
+  }
+  
+  /* Style for mobile screens */
+  @media (max-width: 768px) {
+    .header nav {
+      display: none; /* Hide the navigation on small screens */
+    }
+    .header .menu-toggle {
+      display: initial; /* Show menu toggle button on small screens */
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">
+    <a href="/">Sunnmørsposten</a> 
+  </div>
+  <nav>
+    <a href="/categories/nyheter.html" class="nav-link">Nyheter</a>
+    <a href="/categories/næringsliv.html" class="nav-link">Næringsliv</a>
+    <a href="/categories/sport.html" class="nav-link">Sport</a>
+    <a href="/categories/kultur.html" class="nav-link">Kultur</a>
+
+    
+  </nav>
+  <div class="menu-toggle">☰</div>
+</div>
+
+</body>
+</html>
