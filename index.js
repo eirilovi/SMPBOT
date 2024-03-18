@@ -119,6 +119,27 @@ app.get('/categories', async (req, res) => {
   res.json(categories);
 });
 
+// Endpoint to get an article by ID from Supabase
+app.get('/articles/:id', async (req, res) => {
+  const { id } = req.params;
+  const { data, error } = await supabase
+    .from('Articles')
+    .select('title, author, content, category')
+    .eq('id', id)
+    .single(); // assuming 'id' is a unique column and you're expecting only one result
+
+  if (error) {
+    console.error('Error fetching article:', error);
+    return res.status(500).send('Error fetching article');
+  }
+
+  if (data) {
+    res.json(data);
+  } else {
+    res.status(404).send('Article not found');
+  }
+});
+
 // Endpoint to get articles by category from Supabase
 app.get('/Articles/:category', async (req, res) => {
   const { category } = req.params;
