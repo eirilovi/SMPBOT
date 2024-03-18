@@ -7,12 +7,11 @@ document.addEventListener('DOMContentLoaded', function () {
   const chatbox = document.querySelector(".chatbox");
   const chatbotToggler = document.querySelector(".chatbot-toggler");
   const chatbot = document.querySelector(".chatbot");
-  
+
 // Define the createChatLi function
 const createChatLi = (message, className) => {
   const chatLi = document.createElement("li");
-  chatLi.classList.add("chat", className);
-  
+  chatLi.classList.add("chat", className);  
   // If the message is an element (like our buttons container), append it directly
   if (message instanceof Element) {
     chatLi.appendChild(message);
@@ -298,23 +297,23 @@ chatInput.addEventListener("keypress", function(event) {
     sendChatBtn.click();
   }
 });
-
+    let userMessage = chatInput.value.trim();
     chatbox.appendChild(createChatLi(userMessage, "outgoing"));
     chatbox.scrollTop = chatbox.scrollHeight;
-    generateResponse(userMessage); // Send user message to the server and handle response
+      generateResponse(userMessage); // Send user message to the server and handle response
 
-    chatInput.value = ''; // Clear input field
-  };
+      chatInput.value = ''; // Clear input field
+     // Add closing parenthesis here
 
-  sendChatBtn.addEventListener("click", handleChat);
+    sendChatBtn.addEventListener("click", handleChat);
 
-  // Handle enter key for sending a message
-  chatInput.addEventListener("keypress", function(event) {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      sendChatBtn.click();
-    }
-  });
+    // Handle enter key for sending a message
+    chatInput.addEventListener("keypress", function(event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        sendChatBtn.click();
+      }
+    });
 
   function navigateTo(path) {
     // Assuming 'path' already includes the '.html' extension as needed
@@ -357,12 +356,11 @@ chatInput.addEventListener("keypress", function(event) {
   fetch('../header.component.html')
   .then(response => response.text())
   .then(data => {
+    console.log("Header component loaded successfully.")
     document.getElementById('header-placeholder').innerHTML = data;
     addNavigationEventListeners(); // This will setup your click events after the header is loaded
+    console.log("Header component loaded successfully.")
   })
   .catch(error => console.error('Error loading the header component:', error));
-  
-
 
 });
-
