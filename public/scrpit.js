@@ -297,23 +297,6 @@ chatInput.addEventListener("keypress", function(event) {
     sendChatBtn.click();
   }
 });
-    let userMessage = chatInput.value.trim();
-    chatbox.appendChild(createChatLi(userMessage, "outgoing"));
-    chatbox.scrollTop = chatbox.scrollHeight;
-      generateResponse(userMessage); // Send user message to the server and handle response
-
-      chatInput.value = ''; // Clear input field
-     // Add closing parenthesis here
-
-    sendChatBtn.addEventListener("click", handleChat);
-
-    // Handle enter key for sending a message
-    chatInput.addEventListener("keypress", function(event) {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        sendChatBtn.click();
-      }
-    });
 
   function navigateTo(path) {
     // Assuming 'path' already includes the '.html' extension as needed
