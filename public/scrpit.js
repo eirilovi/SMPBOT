@@ -188,20 +188,29 @@ const handleCategoryAction = (category, action) => {
   }
 
   fetch(`http://localhost:3000${endpoint}`)
-    .then(response => response.json())
-    .then(articles => {
-      if (articles.length === 0) {
-        chatbox.appendChild(createChatLi("There are no articles available for this selection.", "incoming"));
-      } else {
-        let message = articles.map(article => `- ${article.title}`).join('\n');
-        chatbox.appendChild(createChatLi(message, "incoming"));
-      }
-      chatbox.scrollTop = chatbox.scrollHeight;
-    })
-    .catch(error => {
-      console.error('Error:', error);
-      chatbox.appendChild(createChatLi("Sorry, there was an error fetching the articles.", "incoming"));
-    });
+  .then(response => response.json())
+  .then(articles => {
+    if (articles.length === 0) {
+      chatbox.appendChild(createChatLi("There are no articles available for this selection.", "incoming"));
+    } else {
+      // Create an anchor element for each article
+      const articlesHtml = articles.map(article => {
+        const anchorElement = document.createElement('a');
+        anchorElement.href = article.url;
+        anchorElement.textContent = article.title;
+        anchorElement.target = "_blank";
+        return anchorElement.outerHTML; // Get the HTML string of the anchor element
+      }).join('<br><br>'); // Join them with a line break
+      
+      // Create a chat message with the articles HTML
+      chatbox.appendChild(createChatLi(articlesHtml, "incoming"));
+    }
+    chatbox.scrollTop = chatbox.scrollHeight;
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    chatbox.appendChild(createChatLi("Sorry, there was an error fetching the articles.", "incoming"));
+  });
 };
 
 

@@ -54,7 +54,7 @@ async function fetchRelevantArticles() {
   try {
       const { data, error } = await supabase
           .from('Articles')
-          .select('title')
+          .select('title, url') // Select both title and url from your Articles table
           .limit(5);
 
       if (error) {
@@ -62,8 +62,8 @@ async function fetchRelevantArticles() {
       }
 
       if (data && data.length > 0) {
-          // Join the article titles with two newlines for spacing
-          return data.map(article => `- ${article.title}`).join('\<br><br>');
+          // Create hyperlinks for each article
+          return data.map(article => `<a href="${article.url}" target="_blank">${article.title}</a>`).join('<br><br>');
       } else {
           return "Det er for tiden ingen relevante artikler å vise.";
       }
@@ -72,6 +72,7 @@ async function fetchRelevantArticles() {
       return "Det oppsto en feil under henting av artikler.";
   }
 }
+
 
 async function fetchYouthArticles() {
   try {
@@ -86,7 +87,7 @@ async function fetchYouthArticles() {
       }
 
       if (data && data.length > 0) {
-          return data.map(article => `- ${article.title}`).join('<br><br>');
+        return data.map(article => `<a href="${article.url}" target="_blank">${article.title}</a>`).join('<br><br>');
       } else {
           return "Det er for tiden ingen artikler for Ungdom å vise.";
       }
@@ -135,11 +136,19 @@ app.get('/Articles/:category', async (req, res) => {
 });
 
 
+// This function will send JSON responses with titles and URLs
+const sendArticlesAsJson = (res, data) => {
+  const articlesWithLinks = data.map(article => {
+    return { title: article.title, url: article.url };
+  });
+  res.json(articlesWithLinks); // Send a JSON response
+};
+
 app.get('/Articles/:category/latest', async (req, res) => {
   const { category } = req.params;
   const { data, error } = await supabase
     .from('Articles')
-    .select('*')
+    .select('title, url')
     .eq('category', category)
     .order('publication_date', { ascending: false })
     .limit(3);
@@ -149,14 +158,15 @@ app.get('/Articles/:category/latest', async (req, res) => {
     return res.status(500).send('Error fetching latest Articles');
   }
 
-  res.json(data);
+  sendArticlesAsJson(res, data);
 });
+
 
 app.get('/Articles/:category/important', async (req, res) => {
   const { category } = req.params;
   const { data, error } = await supabase
     .from('Articles')
-    .select('*')
+    .select('title, url')
     .eq('category', category)
     .order('viktighetsgrad', { ascending: false })
     .limit(3);
@@ -166,24 +176,35 @@ app.get('/Articles/:category/important', async (req, res) => {
     return res.status(500).send('Error fetching important articles');
   }
 
-  res.json(data);
+  const articlesAsJson = data.map(article => {
+    return { title: article.title, url: article.url };
+  });
+
+  res.json(articlesAsJson);
 });
+
 
 app.get('/Articles/:category/random', async (req, res) => {
   const { category } = req.params;
   try {
-    let { data, error } = await supabase
+    const { data, error } = await supabase
       .rpc('random_article', { cat: category })
+      .limit(1); // Assuming the RPC returns a single random article, adjust if it's different.
 
-    if (error) throw error;
+    if (error) {
+      throw error;
+    }
 
-    res.json(data);
+    const articlesAsJson = data.map(article => {
+      return { title: article.title, url: article.url };
+    });
+
+    res.json(articlesAsJson);
   } catch (error) {
     console.error('Error fetching random article:', error);
     res.status(500).send('Error fetching random article');
   }
 });
-
 
 
 // Endpoint to process questions
