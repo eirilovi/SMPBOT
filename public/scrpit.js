@@ -208,8 +208,17 @@ const handleCategoryAction = (category, action) => {
       if (articles.length === 0) {
         chatbox.appendChild(createChatLi("There are no articles available for this selection.", "incoming"));
       } else {
-        let message = articles.map(article => `- ${article.title}`).join('\n');
-        chatbox.appendChild(createChatLi(message, "incoming"));
+        // Use the map function to iterate over articles and create anchor elements
+        const articlesHtml = articles.map(article => {
+          const anchorElement = document.createElement('a');
+          anchorElement.href = article.url;
+          anchorElement.textContent = article.title;
+          anchorElement.target = "_blank";
+          return anchorElement.outerHTML; // Get the HTML string of the anchor element
+        }).join('<br><br>'); // Join them with a line break
+        
+        // Create a chat message with the articles HTML
+        chatbox.appendChild(createChatLi(articlesHtml, "incoming"));
       }
       chatbox.scrollTop = chatbox.scrollHeight;
     })
