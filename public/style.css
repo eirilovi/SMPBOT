@@ -132,7 +132,7 @@ body {
 
 .chatbox .incoming p {
   color: black;
-  background: #f2f2f2;
+  background: #c2c2c2;
   border-radius: 10px 10px 10px;
 }
 
@@ -187,6 +187,30 @@ body {
   display: block;
 }
 
+/* Add this to your CSS file for the typing animation */
+.typing-animation {
+  display: flex;
+  align-items: center;
+}
+
+.typing-dot {
+  width: 8px;
+  height: 8px;
+  margin: 0 3px;
+  background-color: #999;
+  border-radius: 50%;
+  animation: typing-animation 1.4s infinite;
+}
+
+.typing-dot:nth-child(1) { animation-delay: 0ms; }
+.typing-dot:nth-child(2) { animation-delay: 200ms; }
+.typing-dot:nth-child(3) { animation-delay: 400ms; }
+
+@keyframes typing-animation {
+  0%, 100% { opacity: .2; }
+  50% { opacity: 1; }
+}
+
 .chatbot-button {
   padding: 5px 10px;
   margin: 5px;
@@ -200,31 +224,30 @@ body {
 /* Container for FAQ buttons to lay them out horizontally */
 .faq-buttons-container {
   display: flex;
-  justify-content: space-between; /* Distribute space around items */
-  align-items: center; /* Align items vertically */
+  flex-direction: column; /* Stack buttons vertically */
+  align-items: center; /* Center buttons horizontally */
   width: 100%;
 }
 
+.option-button,
+.category-button,
 .faq-button {
-  flex-grow: 1; /* Allow the buttons to grow and fill the container */
-  margin: 0 5px; /* Adjust the margin as needed for spacing between buttons */
-  width: 60px; /* Width for square shape */
-  height: 60px; /* Height for square shape */
-  padding: 0px; /* Padding inside the buttons */
-  margin: 2px; /* Margin around the buttons */
+  margin: 3px 0; /* Provide 3px vertical spacing between buttons */
+  width: calc(100% - 40px); /* Adjust width to fit container, accounting for padding */
+  padding: 10px 20px; /* 10px vertical padding and 20px horizontal padding */
+  font-size: 0.9rem; /* Font size adjusted */
   background-color: #084c9c; /* Button color */
   color: white; /* Text color */
   border: none;
-  border-radius: 5px; /* Rounded corners for aesthetics */
+  border-radius: 4px; /* Slightly rounded corners for aesthetics */
   cursor: pointer;
   transition: background-color 0.3s;
-  font-size: 0.65rem; /* Adjust font size as needed */
   display: flex; /* Use flexbox for centering text */
-  justify-content: center; /* Center text horizontally */
+  justify-content: flex-start; /* Align text to the left */
   align-items: center; /* Center text vertically */
-  text-align: center; /* Center text for browsers that don't support flexbox */
+  text-align: left; /* Align text to the left for browsers that don't support flexbox */
+  position: relative; /* Needed for positioning the pseudo-element */
 }
-
 .faq-button:hover {
   background-color: #062e5b; /* Darker color on hover */
 }
@@ -232,64 +255,38 @@ body {
 /* Container for FAQ buttons to lay them out horizontally */
 .category-buttons-container {
   display: flex;
-  justify-content: space-between; /* Distribute space around items */
-  align-items: center; /* Align items vertically */
+  flex-direction: column; /* Stack buttons vertically */
+  align-items: center; /* Center buttons horizontally */
   width: 100%;
 }
-
-.category-button {
-  flex-grow: 1; /* Allow the buttons to grow and fill the container */
-  margin: 0 5px; /* Adjust the margin as needed for spacing between buttons */
-  width: 60px; /* Width for square shape */
-  height: 60px; /* Height for square shape */
-  padding: 0px; /* Padding inside the buttons */
-  margin: 2px; /* Margin around the buttons */
-  background-color: #084c9c; /* Button color */
-  color: white; /* Text color */
-  border: none;
-  border-radius: 5px; /* Rounded corners for aesthetics */
-  cursor: pointer;
-  transition: background-color 0.3s;
-  font-size: 0.65rem; /* Adjust font size as needed */
-  display: flex; /* Use flexbox for centering text */
-  justify-content: center; /* Center text horizontally */
-  align-items: center; /* Center text vertically */
-  text-align: center; /* Center text for browsers that don't support flexbox */
-}
-
 .category-button:hover {
   background-color: #062e5b; /* Darker color on hover */
-}
-
-/* Styles for Option Buttons (similar to FAQ buttons) */
-.option-button {
-  flex-grow: 1;
-  margin: 0 5px;
-  width: 60px;
-  height: 60px;
-  padding: 0px;
-  margin: 2px;
-  background-color: #084c9c;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-  font-size: 0.65rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
 }
 
 .option-button:hover {
   background-color: #062e5b;
 }
 
+.faq-button::after,
+.category-button::after,
+.option-button::after {
+  content: '>'; /* This is the content of the pseudo-element, the arrow */
+  position: absolute; /* Position the pseudo-element relative to its parent */
+  right: 20px; /* Right alignment with some padding from the edge */
+  top: 50%; /* Center vertically */
+  transform: translateY(-50%); /* Align perfectly in the center */
+  color: white; /* Arrow color */
+  font-size: 1.25rem; /* Arrow size, adjust as needed */
+  /* If you want to use a custom arrow image, you'd replace the content property with: */
+  /* content: url(path-to-your-arrow-image.png); */
+}
 
-/* Responsive adjustments for the category buttons */
+/* Adjustments for responsive design remain the same */
 @media (max-width: 768px) {
-  .category-button {
+  /* Responsive adjustments for the category buttons when stacked vertically */
+  .category-button,
+  .faq-button,
+  .option-button {
     width: auto; /* Let buttons take the width of their container */
     margin: 5px 0; /* Adjust for vertical stacking */
   }
