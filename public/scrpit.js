@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const chatbox = document.querySelector(".chatbox");
   const chatbotToggler = document.querySelector(".chatbot-toggler");
   const chatbot = document.querySelector(".chatbot");
+  const chatbotClose = document.querySelector("#chatbot-close");
 
 // Define the createChatLi function
 const createChatLi = (message, className) => {
@@ -96,6 +97,9 @@ const createFaqButtons = () => {
       chatbot.classList.toggle("show-chatbot");
     });
   
+    chatbotClose.addEventListener('click', function() {
+      chatbot.classList.toggle("show-chatbot");
+    });
 
 
 // Fetch and display categories

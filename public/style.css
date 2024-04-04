@@ -41,6 +41,8 @@ body {
   opacity: 1;
 }
 
+
+
 .chatbot {
   position: fixed;
   right: 40px;
@@ -74,7 +76,7 @@ body {
 .chatbot header span {
   position: absolute;
   right: 20px;
-  top: 50px;
+  top: 20px;
   color: #fff;
   cursor: pointer;
   display: none;
