@@ -7,6 +7,39 @@ document.addEventListener('DOMContentLoaded', function () {
     const chatbotToggler = document.querySelector(".chatbot-toggler");
     const chatbot = document.querySelector(".chatbot");
 
+      // Start with the thinking animation
+  showTypingAnimation();
+
+  // After the thinking animation, show the greeting
+  setTimeout(() => {
+    hideTypingAnimation();
+    chatbox.appendChild(createChatLi("Hei! Jeg er Sunnmørspostens Chatbot!", "incoming"));
+    chatbox.scrollTop = chatbox.scrollHeight;
+
+    // Start the thinking animation again
+    showTypingAnimation();
+
+    // After that animation, show the FAQ buttons
+    setTimeout(() => {
+      hideTypingAnimation();
+      createFaqButtons(); // This function appends the buttons to the chatbox
+
+      // Start the thinking animation again
+      showTypingAnimation();
+
+      // Finally, after that animation, show the follow-up message
+      setTimeout(() => {
+        hideTypingAnimation();
+        const clickButtonMessage = "Trykk på en av knappene, eller spør et spørsmål i chatten. :D"
+;
+        chatbox.appendChild(createChatLi(clickButtonMessage, "incoming"));
+        chatbox.scrollTop = chatbox.scrollHeight;
+      }, 1500); // Delay for the third thinking animation
+
+    }, 1500); // Delay for the second thinking animation
+
+  }, 1500); // Delay for the first thinking animation
+
     // Define the createChatLi function
     const createChatLi = (message, className) => {
         const chatLi = document.createElement("li");
@@ -74,14 +107,14 @@ const createFaqButtons = () => {
     chatbox.scrollTop = chatbox.scrollHeight;
   
     // Add a message after the FAQ buttons
-    const clickButtonMessage = "Trykk på en av knappene, eller spør et spørsmål i chatten. :D";
-    chatbox.appendChild(createChatLi(clickButtonMessage, "incoming"));
-    chatbox.scrollTop = chatbox.scrollHeight;
+    //const clickButtonMessage = "Trykk på en av knappene, eller spør et spørsmål i chatten. :D";
+    //chatbox.appendChild(createChatLi(clickButtonMessage, "incoming"));
+    //chatbox.scrollTop = chatbox.scrollHeight;
   
 };
 
   // Call createFaqButtons to create and append FAQ buttons once
-  createFaqButtons();
+  //createFaqButtons();
 
   fetch('../header.component.html')
     .then(response => response.text())
