@@ -205,39 +205,83 @@ app.get('/Articles/:category/random', async (req, res) => {
   }
 });
 
+const searchArticlesInDatabase = async (searchTerms) => {
+  const keywords = searchTerms.split(' '); // Split the searchTerms string into an array of keywords
+  console.log("Split search terms into keywords:", keywords);
+
+  try {
+    let query = supabase
+      .from('Articles')
+      .select('id, title, author, content, category, publication_date, url');
+    
+    // Dynamically add 'ilike' filters for each keyword
+    keywords.forEach(keyword => {
+      // Add or conditions for title, content, and category for each keyword
+      query = query.or(`title.ilike.%${keyword}%,content.ilike.%${keyword}%,category.ilike.%${keyword}%`);
+    });
+
+    // Execute the query
+    let { data: Articles, error } = await query;
+
+    if (error) {
+      console.error('Error searching Articles:', error);
+      return [];
+    }
+
+    if (Articles.length > 0) {
+      console.log(`${Articles.length} Articles found.`);
+    } else {
+      console.log('No Articles found with the given search terms.');
+    }
+
+    return Articles;
+  } catch (error) {
+    console.error('Unhandled error searching Articles:', error);
+    return [];
+  }
+};
+
 
 
 // Endpoint to process questions
 app.post('/ask', async (req, res) => {
   const userInput = req.body.message;
-  let responseText = await checkSubscriptionFAQs(userInput); // Check FAQs first
-
+  // First, check if the user is asking for something that can be answered by FAQs
+  let responseText = await checkSubscriptionFAQs(userInput);
   // Add user's input to chat history
   chatHistory.push({ role: 'user', content: userInput });
 
-  if (!responseText) { // If not an FAQ, proceed with OpenAI
-    try {
-      const openAIResponse = await openai.createChatCompletion({
-        model: 'gpt-4-0125-preview',
-        messages: chatHistory,
-        max_tokens: 500,
-      });
-      responseText = openAIResponse.data.choices[0].message.content?.trim();
-      // Add OpenAI's response to chat history
-      chatHistory.push({ role: 'assistant', content: responseText });
-    } catch (error) {
-      console.error("Error with OpenAI:", error);
-      responseText = "Sorry, I encountered an error processing your request.";
+  if (!responseText) {
+    // Attempt to find articles relevant to the user's input
+    const Articles = await searchArticlesInDatabase(userInput);
+    console.log('Articles:', Articles);
+    // If articles are found, format them into a response
+    if (Articles.length > 0) {
+      console.log('Hadde vært gøy med artikkler', Articles);
+      responseText = Articles.map(Article => 
+        `Title: ${Article.title}, Author: ${Article.author}, Summary: ${Article.content.substring(0, 150)}...` // Summarize the content
+      ).join('\n');
+    } else {
+      // If no articles are found, ask OpenAI for an appropriate response
+      try {
+        console.log('Ingen artikkler her nei', Articles);
+        const openAIResponse = await openai.createChatCompletion({
+          model: 'gpt-4-0125-preview',
+          messages: chatHistory,
+          max_tokens: 300,
+        });
+        responseText = openAIResponse.data.choices[0].message.content?.trim();
+        // Add OpenAI's response to chat history
+        chatHistory.push({ role: 'assistant', content: responseText });
+      } catch (error) {
+        console.error("Error with OpenAI:", error);
+        responseText = "Sorry, I encountered an error processing your request.";
+      }
     }
   }
 
-  res.json({ response: responseText }); // Send the response
-});
-
-// Reset chat history
-app.post('/reset', (req, res) => {
-  chatHistory = []; // Clear the chat history
-  res.send('Chat history has been reset.');
+  // Send the response back to the user
+  res.json({ response: responseText });
 });
 
 app.get("", (req, res) => {
