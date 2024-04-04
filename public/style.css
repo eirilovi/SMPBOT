@@ -4,7 +4,7 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: "Poppins, sans-serif";
+  font-family: "Calibri";
 }
 
 body {
@@ -234,7 +234,7 @@ body {
 .category-button,
 .faq-button {
   margin: 3px 0; /* Provide 3px vertical spacing between buttons */
-  width: calc(100% - 40px); /* Adjust width to fit container, accounting for padding */
+  width: calc(100% - 100px); /* Reduced width by additional 10px on each side */
   padding: 10px 20px; /* 10px vertical padding and 20px horizontal padding */
   font-size: 0.9rem; /* Font size adjusted */
   background-color: #084c9c; /* Button color */
