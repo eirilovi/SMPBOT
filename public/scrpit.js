@@ -1,11 +1,16 @@
 let selectedCategory = null;
 
 document.addEventListener('DOMContentLoaded', function () {
-    const chatInput = document.querySelector(".chat-input textarea");
-    const sendChatBtn = document.querySelector(".chat-input span");
-    const chatbox = document.querySelector(".chatbox");
-    const chatbotToggler = document.querySelector(".chatbot-toggler");
-    const chatbot = document.querySelector(".chatbot");
+  const chatbotToggler = document.querySelector(".chatbot-toggler");
+  const chatbot = document.querySelector(".chatbot");
+  let isChatbotInitialized = false;
+
+  // Function to initialize the chatbot
+  function initializeChatbot() {
+      const chatInput = document.querySelector(".chat-input textarea");
+      const sendChatBtn = document.querySelector(".chat-input span");
+      const chatbox = document.querySelector(".chatbox");
+
 
       // Start with the thinking animation
   showTypingAnimation();
@@ -115,19 +120,6 @@ const createFaqButtons = () => {
 
   // Call createFaqButtons to create and append FAQ buttons once
   //createFaqButtons();
-
-  fetch('../header.component.html')
-    .then(response => response.text())
-    .then(data => {
-        document.getElementById('header-placeholder').innerHTML = data;
-    })
-    .catch(error => console.error('Error loading the header component:', error));
-      
-    // Function to toggle the chat window
-    chatbotToggler.addEventListener('click', function() {
-      chatbot.classList.toggle("show-chatbot");
-    });
-  
 
     // Define the showTypingAnimation function
     function showTypingAnimation() {
@@ -360,29 +352,43 @@ const generateResponse = (userMessage) => {
     });
   }
 };
+        // Function to handle chat messages
+        function handleChat() {
+          // Your existing handleChat function logic
+          let userMessage = chatInput.value.trim();
+          if (!userMessage) return;
 
+          chatbox.appendChild(createChatLi(userMessage, "outgoing"));
+          chatbox.scrollTop = chatbox.scrollHeight;
+          generateResponse(userMessage); // Send user message to the server and handle response
+          chatInput.value = ''; // Clear input field after sending
+      }
 
-
-const handleChat = () => {
-  let userMessage = chatInput.value.trim();
-  if (!userMessage) return;
-
-  chatbox.appendChild(createChatLi(userMessage, "outgoing"));
-  chatbox.scrollTop = chatbox.scrollHeight;
-  generateResponse(userMessage); // Send user message to the server and handle response
-  chatInput.value = ''; // Clear input field after sending
-};
-
-// Event listeners for sending a message
-sendChatBtn.addEventListener("click", handleChat);
-chatInput.addEventListener("keypress", function(event) {
-  if (event.key === "Enter") {
-    event.preventDefault();
-    sendChatBtn.click();
+      // Event listeners for sending a message
+      sendChatBtn.addEventListener("click", handleChat);
+      chatInput.addEventListener("keypress", function(event) {
+          if (event.key === "Enter") {
+              event.preventDefault();
+              sendChatBtn.click();
+          }
+      });
   }
-});
 
-sendChatBtn.addEventListener("click", handleChat);
+    // Function to toggle the chat window and initialize chatbot
+    chatbotToggler.addEventListener('click', function() {
+      if (!chatbot.classList.contains('show-chatbot') && !chatbot.classList.contains('initialized')) {
+          initializeChatbot();
+          chatbot.classList.add('initialized');
+      }
+      chatbot.classList.toggle("show-chatbot");
+  });
+
+  fetch('../header.component.html')
+    .then(response => response.text())
+    .then(data => {
+        document.getElementById('header-placeholder').innerHTML = data;
+    })
+    .catch(error => console.error('Error loading the header component:', error));
 
 // Handle enter key for sending a message
 chatInput.addEventListener("keypress", function(event) {
@@ -431,14 +437,13 @@ chatInput.addEventListener("keypress", function(event) {
       });
     });
   }
-  fetch('../header.component.html')
-  .then(response => response.text())
-  .then(data => {
-    console.log("Header component loaded successfully.")
-    document.getElementById('header-placeholder').innerHTML = data;
-    addNavigationEventListeners(); // This will setup your click events after the header is loaded
-    console.log("Header component loaded successfully.")
-  })
-  .catch(error => console.error('Error loading the header component:', error));
+    // Load header component
+    fetch('../header.component.html')
+    .then(response => response.text())
+    .then(data => {
+        document.getElementById('header-placeholder').innerHTML = data;
+        // Additional logic after header is loaded, if needed
+    })
+    .catch(error => console.error('Error loading the header component:', error));
 
 });
