@@ -110,22 +110,15 @@ const createFaqButtons = () => {
     // Append FAQ buttons to the chatbox
     chatbox.appendChild(createChatLi(buttonsContainer, "incoming"));
     chatbox.scrollTop = chatbox.scrollHeight;
-  
-    // Add a message after the FAQ buttons
-    //const clickButtonMessage = "Trykk på en av knappene, eller spør et spørsmål i chatten. :D";
-    //chatbox.appendChild(createChatLi(clickButtonMessage, "incoming"));
-    //chatbox.scrollTop = chatbox.scrollHeight;
-  
-};
 
-  // Call createFaqButtons to create and append FAQ buttons once
-  //createFaqButtons();
+};
 
     // Define the showTypingAnimation function
     function showTypingAnimation() {
       const typingLi = document.createElement('li');
       typingLi.classList.add('chat', 'incoming');
       typingLi.id = 'typing-animation';
+  
 
       const icon = document.createElement("span");
       icon.classList.add("material-symbols-outlined");
@@ -294,7 +287,6 @@ const handleCategoryAction = (category, action) => {
 };
 
 
-// Modify the generateResponse function
 const generateResponse = (userMessage) => {
   const userMessageLower = userMessage.toLowerCase();
 
@@ -347,9 +339,22 @@ const generateResponse = (userMessage) => {
           // If the API returned a different structure, handle it
           // This is a placeholder, adapt based on your actual API response structure
           chatbox.appendChild(createChatLi("Received data, but format was unexpected.", "incoming"));
+        // Handle different response types (text or articles)
+        if (Array.isArray(data.response)) {
+            data.response.forEach(item => {
+                if (item.type === 'text') {
+                    chatbox.appendChild(createChatLi(item.content, "incoming"));
+                } else if (item.type === 'article') {
+                    const articleHtml = formatArticleMessage(item);
+                    chatbox.appendChild(createChatLi(articleHtml, "incoming"));
+                }
+            });
+        } else {
+            // Fallback for handling plain text response
+            chatbox.appendChild(createChatLi(data.response, "incoming"));
         }
         chatbox.scrollTop = chatbox.scrollHeight;
-      }, 1500); // Ensure the message is displayed after the animation
+      }}, 1500); // Ensure the message is displayed after the animation
     })
     .catch(error => {
       console.error('Error:', error);
@@ -357,6 +362,28 @@ const generateResponse = (userMessage) => {
       chatbox.appendChild(createChatLi("Sorry, there was an error processing your message.", "incoming"));
     });
   }
+}
+
+const formatArticleMessage = (article) => {
+  return `
+    <div class="article-message">
+      <strong>${article.title}</strong><br>
+      Author: ${article.author}<br>
+      <p>${article.summary}</p>
+      <a href="${article.url}" target="_blank">Read more</a>
+    </div>
+  `;
+};
+
+
+const handleChat = () => {
+  let userMessage = chatInput.value.trim();
+  if (!userMessage) return;
+
+  chatbox.appendChild(createChatLi(userMessage, "outgoing"));
+  chatbox.scrollTop = chatbox.scrollHeight;
+  generateResponse(userMessage); // Send user message to the server and handle response
+  chatInput.value = ''; // Clear input field after sending
 };
         // Function to handle chat messages
         function handleChat() {

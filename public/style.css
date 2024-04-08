@@ -41,6 +41,8 @@ body {
   opacity: 1;
 }
 
+
+
 .chatbot {
   position: fixed;
   right: 40px;
@@ -72,10 +74,23 @@ body {
   font-size: 1.4rem;
 }
 
+.article-message {
+  background-color: #f0f0f0;
+  padding: 10px;
+  margin: 5px 0;
+  border-radius: 5px;
+}
+
+.article-message a {
+  display: inline-block;
+  margin-top: 5px;
+}
+
+
 .chatbot header span {
   position: absolute;
   right: 20px;
-  top: 50px;
+  top: 20px;
   color: #fff;
   cursor: pointer;
   display: none;
