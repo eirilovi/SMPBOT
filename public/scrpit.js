@@ -154,82 +154,84 @@ const createFaqButtons = () => {
       }
   }
 
-// Fetch and display categories
-const fetchAndDisplayCategories = () => {
-  return new Promise((resolve, reject) => {
-    fetch('http://localhost:3000/categories')
-      .then(response => response.json())
-      .then(categories => {
-        if (categories.length) {
-          const buttonsContainer = document.createElement('div');
-          buttonsContainer.classList.add('category-buttons-container');
-          
-          categories.forEach(category => {
-            const button = document.createElement('button');
-            button.classList.add('category-button');
-            button.textContent = category;
-            button.setAttribute('data-category', category);
-            buttonsContainer.appendChild(button);
-          });
-          
-          chatbox.appendChild(createChatLi(buttonsContainer, "incoming"));
-          
-          // Attach event listeners to the category buttons
-          buttonsContainer.querySelectorAll('.category-button').forEach(button => {
-            button.addEventListener('click', function() {
-              selectedCategory = this.getAttribute('data-category');
-              chatbox.appendChild(createChatLi(`Du valgte kategori: ${selectedCategory}. Hva ønsker du jeg skal gjøre?`, "incoming"));
-
-              // Create and display the three new buttons
-              const optionsContainer = document.createElement('div');
-              optionsContainer.classList.add('faq-buttons-container');
-              
-              const options = [
-                { text: "Nyeste artikler", action: "latest" },
-                { text: "Viktigste artikler", action: "important" },
-                { text: "Tilfeldig artikkel", action: "random" }
-              ];
-              
-              options.forEach(opt => {
-                const optionButton = document.createElement('button');
-                optionButton.classList.add('option-button', 'faq-button');
-                optionButton.textContent = opt.text;
-                optionButton.setAttribute('data-action', opt.action);
-                optionsContainer.appendChild(optionButton);
-              });
-
-              chatbox.appendChild(createChatLi(optionsContainer, "incoming"));
-              chatbox.scrollTop = chatbox.scrollHeight;
-
-              // Attach event listeners to the new option buttons
-              optionsContainer.querySelectorAll('.option-button').forEach(optionButton => {
-                optionButton.addEventListener('click', function() {
-                  const action = this.getAttribute('data-action');
-                  handleCategoryAction(selectedCategory, action);
-                });
+  const fetchAndDisplayCategories = () => {
+    return new Promise((resolve, reject) => {
+      fetch('http://localhost:3000/categories')
+        .then(response => response.json())
+        .then(categories => {
+          if (categories.length) {
+            const buttonsContainer = document.createElement('div');
+            buttonsContainer.classList.add('category-buttons-container');
+            
+            categories.forEach(category => {
+              const button = document.createElement('button');
+              button.classList.add('category-button');
+              button.textContent = category;
+              button.setAttribute('data-category', category);
+              buttonsContainer.appendChild(button);
+            });
+            
+            chatbox.appendChild(createChatLi(buttonsContainer, "incoming"));
+            
+            // Attach event listeners to the category buttons
+            buttonsContainer.querySelectorAll('.category-button').forEach(button => {
+              button.addEventListener('click', function() {
+                showTypingAnimation(); // Show typing animation on category button click
+                selectedCategory = this.getAttribute('data-category');
+                setTimeout(() => { // Simulate processing time
+                  chatbox.appendChild(createChatLi(`Du valgte kategori: ${selectedCategory}. Hva ønsker du jeg skal gjøre?`, "incoming"));
+  
+                  const optionsContainer = document.createElement('div');
+                  optionsContainer.classList.add('faq-buttons-container');
+                  
+                  const options = [
+                    { text: "Nyeste artikler", action: "latest" },
+                    { text: "Viktigste artikler", action: "important" },
+                    { text: "Tilfeldig artikkel", action: "random" }
+                  ];
+                  
+                  options.forEach(opt => {
+                    const optionButton = document.createElement('button');
+                    optionButton.classList.add('option-button', 'faq-button');
+                    optionButton.textContent = opt.text;
+                    optionButton.setAttribute('data-action', opt.action);
+                    optionsContainer.appendChild(optionButton);
+  
+                    // Attach event listeners to each option button
+                    optionButton.addEventListener('click', function() {
+                      showTypingAnimation(); // Show typing animation on option button click
+                      const action = this.getAttribute('data-action');
+                      setTimeout(() => { // Simulate processing time for action handling
+                        handleCategoryAction(selectedCategory, action);
+                        hideTypingAnimation(); // Hide typing animation after processing
+                      }, 1500); // Adjust the timeout duration as per your requirements
+                    });
+                  });
+  
+                  chatbox.appendChild(createChatLi(optionsContainer, "incoming"));
+                  chatbox.scrollTop = chatbox.scrollHeight;
+                  
+                  hideTypingAnimation(); // Hide typing animation after category processing
+                }, 1500); // Adjust the timeout duration as per your requirements
               });
             });
-          });
-          
+  
+            chatbox.scrollTop = chatbox.scrollHeight;
+            resolve(); // Resolve the promise after categories are displayed
+          } else {
+            chatbox.appendChild(createChatLi("There are no categories available at the moment.", "incoming"));
+            reject(new Error("No categories available")); // Reject the promise if no categories are found
+          }
           chatbox.scrollTop = chatbox.scrollHeight;
-          resolve(); // Resolve the promise after categories are displayed
-        } else {
-          chatbox.appendChild(createChatLi("There are no categories available at the moment.", "incoming"));
-          reject(new Error("No categories available")); // Reject the promise if no categories are found
-        }
-        chatbox.scrollTop = chatbox.scrollHeight;
-      })
-      .catch(error => {
-        console.error('Error fetching categories:', error);
-        chatbox.appendChild(createChatLi("Sorry, I am unable to fetch categories at the moment.", "incoming"));
-        chatbox.scrollTop = chatbox.scrollHeight;
-        reject(error); // Reject the promise on error
-      });
-  });
-};
-
-
-
+        })
+        .catch(error => {
+          console.error('Error fetching categories:', error);
+          chatbox.appendChild(createChatLi("Sorry, I am unable to fetch categories at the moment.", "incoming"));
+          chatbox.scrollTop = chatbox.scrollHeight;
+          reject(error); // Reject the promise on error
+        });
+    });
+  };
 
   // Function to display articles for a category
 const displayArticlesForCategory = (category) => {
@@ -335,7 +337,11 @@ const generateResponse = (userMessage) => {
       setTimeout(() => {
         hideTypingAnimation(); // Hide typing animation
         // If there's a response from the GPT or selected category
-        if (data && data.response) {
+        if (data && data.response) {const options = [
+          { text: "Nyeste artikler", action: "latest" },
+          { text: "Viktigste artikler", action: "important" },
+          { text: "Tilfeldig artikkel", action: "random" }
+        ];
           chatbox.appendChild(createChatLi(data.response, "incoming"));
         } else {
           // If the API returned a different structure, handle it
