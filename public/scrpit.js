@@ -224,7 +224,6 @@ const handleCategoryAction = (category, action) => {
 };
 
 
-// Modify the generateResponse function
 const generateResponse = (userMessage) => {
   const userMessageLower = userMessage.toLowerCase();
 
@@ -260,7 +259,20 @@ const generateResponse = (userMessage) => {
     })
     .then(response => response.json())
     .then(data => {
-        chatbox.appendChild(createChatLi(data.response, "incoming"));
+        // Handle different response types (text or articles)
+        if (Array.isArray(data.response)) {
+            data.response.forEach(item => {
+                if (item.type === 'text') {
+                    chatbox.appendChild(createChatLi(item.content, "incoming"));
+                } else if (item.type === 'article') {
+                    const articleHtml = formatArticleMessage(item);
+                    chatbox.appendChild(createChatLi(articleHtml, "incoming"));
+                }
+            });
+        } else {
+            // Fallback for handling plain text response
+            chatbox.appendChild(createChatLi(data.response, "incoming"));
+        }
         chatbox.scrollTop = chatbox.scrollHeight;
     })
     .catch(error => {
@@ -270,6 +282,17 @@ const generateResponse = (userMessage) => {
     });
   }
 }
+
+const formatArticleMessage = (article) => {
+  return `
+    <div class="article-message">
+      <strong>${article.title}</strong><br>
+      Author: ${article.author}<br>
+      <p>${article.summary}</p>
+      <a href="${article.url}" target="_blank">Read more</a>
+    </div>
+  `;
+};
 
 
 const handleChat = () => {
