@@ -5,45 +5,68 @@ document.addEventListener('DOMContentLoaded', function () {
   const chatbot = document.querySelector(".chatbot");
   let isChatbotInitialized = false;
 
-  // Function to initialize the chatbot
+  function getArticleIdFromUrl() {
+    const url = new URL(window.location.href);
+    const pathname = url.pathname;
+
+    if (pathname.includes('article.html')) {
+      return url.searchParams.get('id');
+    }
+
+    return null;
+  }
+
+  //Function to initialize Chatbot
   function initializeChatbot() {
-      const chatInput = document.querySelector(".chat-input textarea");
-      const sendChatBtn = document.querySelector(".chat-input span");
-      const chatbox = document.querySelector(".chatbox");
-
-
-      // Start with the thinking animation
-  showTypingAnimation();
-
-  // After the thinking animation, show the greeting
-  setTimeout(() => {
-    hideTypingAnimation();
-    chatbox.appendChild(createChatLi("Hei! Jeg er Sunnmørspostens Chatbot!", "incoming"));
-    chatbox.scrollTop = chatbox.scrollHeight;
-
-    // Start the thinking animation again
+    const articleId = getArticleIdFromUrl();
+  
+    const chatInput = document.querySelector(".chat-input textarea");
+    const sendChatBtn = document.querySelector(".chat-input span");
+    const chatbox = document.querySelector(".chatbox");
+  
+    // Start with the thinking animation
     showTypingAnimation();
-
-    // After that animation, show the FAQ buttons
+  
+    // After the thinking animation, show the greeting
     setTimeout(() => {
       hideTypingAnimation();
-      createFaqButtons(); // This function appends the buttons to the chatbox
-
+      const greetingMessage = articleId
+        ? `Velkommen til artikkel ${articleId}! Korleis kan eg hjelpa deg?`
+        : "Hei! Jeg er Sunnmørspostens Chatbot!";
+  
+      chatbox.appendChild(createChatLi(greetingMessage, "incoming"));
+      chatbox.scrollTop = chatbox.scrollHeight;
+  
       // Start the thinking animation again
       showTypingAnimation();
-
-      // Finally, after that animation, show the follow-up message
+  
+      // After that animation, show the buttons based on the context
       setTimeout(() => {
         hideTypingAnimation();
-        const clickButtonMessage = "Trykk på en av knappene, eller spør et spørsmål i chatten. :D"
-;
-        chatbox.appendChild(createChatLi(clickButtonMessage, "incoming"));
-        chatbox.scrollTop = chatbox.scrollHeight;
-      }, 1500); // Delay for the third thinking animation
-
-    }, 1500); // Delay for the second thinking animation
-
-  }, 1500); // Delay for the first thinking animation
+        if (articleId) {
+          const articleButtonsContainer = createArticleButtons();
+          chatbox.appendChild(createChatLi(articleButtonsContainer, "incoming"));
+        } else {
+          createFaqButtons(); // This function appends the default FAQ buttons to the chatbox
+        }
+  
+        // Start the thinking animation again
+        showTypingAnimation();
+  
+        // Finally, after that animation, show the follow-up message
+        setTimeout(() => {
+          hideTypingAnimation();
+          const clickButtonMessage = articleId
+            ? "Trykk på en av artikkel-knappene, eller spør et spørsmål i chatten. :D"
+            : "Trykk på en av knappene, eller spør et spørsmål i chatten. :D";
+  
+          chatbox.appendChild(createChatLi(clickButtonMessage, "incoming"));
+          chatbox.scrollTop = chatbox.scrollHeight;
+        }, 1500); // Delay for the third thinking animation
+  
+      }, 1500); // Delay for the second thinking animation
+  
+    }, 1500); // Delay for the first thinking animation
 
     // Define the createChatLi function
     const createChatLi = (message, className) => {
@@ -117,6 +140,29 @@ const createFaqButtons = () => {
     //chatbox.scrollTop = chatbox.scrollHeight;
   
 };
+
+  // Function to create article-specific buttons
+  function createArticleButtons() {
+    const articleButtons = [
+      { text: "Oppsummer artikkel", pattern: "summarize article" },
+      { text: "Lignende artikler", pattern: "similar articles" },
+      { text: "Placeholder 3", pattern: "placeholder3" },
+      { text: "Placeholder 4", pattern: "placeholder4" }
+    ];
+
+    const buttonsContainer = document.createElement('div');
+    buttonsContainer.classList.add('faq-buttons-container');
+
+    articleButtons.forEach(btn => {
+      const button = document.createElement('button');
+      button.classList.add('faq-button', 'category-button');
+      button.setAttribute('data-pattern', btn.pattern);
+      button.textContent = btn.text;
+      buttonsContainer.appendChild(button);
+    });
+
+    return buttonsContainer;
+  }
 
   // Call createFaqButtons to create and append FAQ buttons once
   //createFaqButtons();
