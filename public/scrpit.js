@@ -110,15 +110,22 @@ const createFaqButtons = () => {
     // Append FAQ buttons to the chatbox
     chatbox.appendChild(createChatLi(buttonsContainer, "incoming"));
     chatbox.scrollTop = chatbox.scrollHeight;
-
+  
+    // Add a message after the FAQ buttons
+    //const clickButtonMessage = "Trykk på en av knappene, eller spør et spørsmål i chatten. :D";
+    //chatbox.appendChild(createChatLi(clickButtonMessage, "incoming"));
+    //chatbox.scrollTop = chatbox.scrollHeight;
+  
 };
+
+  // Call createFaqButtons to create and append FAQ buttons once
+  //createFaqButtons();
 
     // Define the showTypingAnimation function
     function showTypingAnimation() {
       const typingLi = document.createElement('li');
       typingLi.classList.add('chat', 'incoming');
       typingLi.id = 'typing-animation';
-  
 
       const icon = document.createElement("span");
       icon.classList.add("material-symbols-outlined");
@@ -288,83 +295,48 @@ const handleCategoryAction = (category, action) => {
 
 
 const generateResponse = (userMessage) => {
-  const userMessageLower = userMessage.toLowerCase();
-
-  // Show the typing animation
-  showTypingAnimation();
-
-  // Check for hardcoded responses or need for GPT processing
-  if (userMessageLower.includes("hvilke kategorier")) {
-    // For hardcoded responses, set a timeout to match the animation
-    setTimeout(() => {
-      fetchAndDisplayCategories().then(() => {
-        // After fetching categories, hide the typing animation
-        hideTypingAnimation();
-      }).catch(error => {
-        console.error('Error fetching categories:', error);
-        chatbox.appendChild(createChatLi("Sorry, I am unable to fetch categories at the moment.", "incoming"));
-        hideTypingAnimation();
-      });
-    }, 1500); // Delay should match your typing animation
-  } else {
-    // If it's not a hardcoded response, handle with GPT
-    let endpoint;
-    if (window.chatCategories && window.chatCategories.map(c => c.toLowerCase()).includes(userMessageLower)) {
-      selectedCategory = window.chatCategories.find(c => c.toLowerCase() === userMessageLower);
-      endpoint = `/Articles/${selectedCategory}`;
-    } else {
-      endpoint = '/ask';
-    }
-
-    // Use fetch for both GPT responses and selected category articles
-    fetch(`http://localhost:3000${endpoint}`, {
-      method: endpoint === '/ask' ? 'POST' : 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: endpoint === '/ask' ? JSON.stringify({ message: userMessage }) : null,
-    })
-    .then(response => response.json())
-    .then(data => {
-      setTimeout(() => {
-        hideTypingAnimation(); // Hide typing animation
-        // If there's a response from the GPT or selected category
-        if (data && data.response) {const options = [
-          { text: "Nyeste artikler", action: "latest" },
-          { text: "Viktigste artikler", action: "important" },
-          { text: "Tilfeldig artikkel", action: "random" }
-        ];
-          chatbox.appendChild(createChatLi(data.response, "incoming"));
-        } else {
-          // If the API returned a different structure, handle it
-          // This is a placeholder, adapt based on your actual API response structure
-          chatbox.appendChild(createChatLi("Received data, but format was unexpected.", "incoming"));
-        // Handle different response types (text or articles)
-        if (Array.isArray(data.response)) {
-            data.response.forEach(item => {
-                if (item.type === 'text') {
-                    chatbox.appendChild(createChatLi(item.content, "incoming"));
-                } else if (item.type === 'article') {
-                    const articleHtml = formatArticleMessage(item);
-                    chatbox.appendChild(createChatLi(articleHtml, "incoming"));
-                }
-            });
-        } else {
-            // Fallback for handling plain text response
-            chatbox.appendChild(createChatLi(data.response, "incoming"));
-        }
-        chatbox.scrollTop = chatbox.scrollHeight;
-      }}, 1500); // Ensure the message is displayed after the animation
-    })
-    .catch(error => {
-      console.error('Error:', error);
-      hideTypingAnimation(); // Hide typing animation on error
-      chatbox.appendChild(createChatLi("Sorry, there was an error processing your message.", "incoming"));
+  fetch('http://localhost:3000/ask', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ message: userMessage }),
+  })
+  .then(response => response.json())
+  .then(data => {
+    // Here we're assuming 'data.response' is an array of responses.
+    // We need to ensure that we're correctly iterating over this array
+    // and handling each response based on its type.
+    data.response.forEach((item) => {
+      let chatBubble;
+      if (item.type === 'text') {
+        // For text responses
+        chatBubble = createChatLi(item.content, "incoming");
+      } else if (item.type === 'article') {
+        // For article responses, we format them appropriately
+        const articleMessage = formatArticleMessage(item);
+        chatBubble = createChatLi(articleMessage, "incoming");
+      }
+      if (chatBubble) {
+        chatbox.appendChild(chatBubble);
+      }
     });
-  }
-}
+    chatbox.scrollTop = chatbox.scrollHeight;
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    const errorMessage = createChatLi("Sorry, there was an error processing your message.", "incoming");
+    chatbox.appendChild(errorMessage);
+    chatbox.scrollTop = chatbox.scrollHeight;
+  })
+  .finally(() => {
+    // Hide the typing animation here if you have one
+    hideTypingAnimation();
+  });
+};
 
 const formatArticleMessage = (article) => {
+  // Adjust this formatting as needed to match your front-end's expected structure
   return `
     <div class="article-message">
       <strong>${article.title}</strong><br>
@@ -373,17 +345,6 @@ const formatArticleMessage = (article) => {
       <a href="${article.url}" target="_blank">Read more</a>
     </div>
   `;
-};
-
-
-const handleChat = () => {
-  let userMessage = chatInput.value.trim();
-  if (!userMessage) return;
-
-  chatbox.appendChild(createChatLi(userMessage, "outgoing"));
-  chatbox.scrollTop = chatbox.scrollHeight;
-  generateResponse(userMessage); // Send user message to the server and handle response
-  chatInput.value = ''; // Clear input field after sending
 };
         // Function to handle chat messages
         function handleChat() {
