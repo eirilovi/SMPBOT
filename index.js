@@ -26,7 +26,7 @@ app.use(express.static("public")); // Serve static files
 //const ArticlesData = JSON.parse(fs.readFileSync(path.join(__dirname, 'sample_Articles.json'), 'utf8'));
 //const categories = Object.keys(ArticlesData);
 let chatHistory = [
-  { role: 'system', content: 'You are an AI chatbot created for sunnmørsposten, a norwegian news channel. You WILL NOT answer any questions that a news based bot would not answer. This includes but is not related to: "Medical help, jokes, silly stuff, geography, cooking". If you receive an inappropriate prompt, you will let the user know that you only provide answers based on news, or nagivating the sunnmørsposten website. You will only communicate in "Nynorsk", also known as New Norwegian' }
+  { role: 'system', content: ''}
 ];; // Store the chat history
 
 // Function to check FAQs
@@ -272,28 +272,30 @@ const searchArticlesInDatabase = async (keywords) => {
   return ArticlesFound;
 };
 
-
-
 app.post('/ask', async (req, res) => {
   const userInput = req.body.message;
-  let response = [];
   
+  // Update chat history with user's message
+  chatHistory.push({ role: 'user', content: userInput });
+
   // First, check if the user is asking for something that can be answered by FAQs
-  let responseText = await checkSubscriptionFAQs(userInput);
+  let faqResponse = await checkSubscriptionFAQs(userInput);
   
-  if (responseText) {
-    // FAQ response found, prepare it to send back
-    response.push({ type: 'text', content: responseText });
+  let response = [];
+
+  if (faqResponse) {
+    // FAQ response found, append it to the response array and update chat history
+    response.push({ type: 'text', content: faqResponse });
+    chatHistory.push({ role: 'system', content: faqResponse });
   } else {
     // No FAQ match, extract keywords from the user input
     const keywords = extractKeywords(userInput);
     
-    // Proceed if keywords are extracted; otherwise, ask OpenAI directly
     if (keywords.length > 0) {
       const articles = await searchArticlesInDatabase(keywords);
       
       if (articles.length > 0) {
-        // Prepare each article as an individual response
+        // Found relevant articles, prepare each article as an individual response
         articles.forEach(article => {
           response.push({
             type: 'article',
@@ -302,34 +304,37 @@ app.post('/ask', async (req, res) => {
             summary: article.content.substring(0, 150) + '...',
             url: article.url // Assuming you have a URL for the article
           });
+          chatHistory.push({ role: 'system', content: article.title });
         });
       } else {
-        // No articles found, prepare to ask OpenAI
-        await askOpenAIForResponse();
+        // No articles found, ask OpenAI
+        await askOpenAIForResponse(userInput);
       }
     } else {
-      // No keywords found, prepare to ask OpenAI
-      await askOpenAIForResponse();
+      // No keywords found, ask OpenAI
+      await askOpenAIForResponse(userInput);
     }
   }
 
-  // Send the array of responses back
+  // Send the response array back
   res.json({ response });
 
-  async function askOpenAIForResponse() {
+  async function askOpenAIForResponse(userInput) {
     try {
       const openAIResponse = await openai.createChatCompletion({
-        model: 'gpt-4-0125-preview',
-        messages: [{role: "user", content: userInput}], // Adjust based on how you're structuring chat history
+        model: 'gpt-3.5-turbo',
         messages: chatHistory,
         max_tokens: 300,
       });
-      responseText = openAIResponse.data.choices[0].message.content.trim();
+      let responseText = openAIResponse.data.choices[0].message.content.trim();
       // Prepare OpenAI's response to send back
       response.push({ type: 'text', content: responseText });
+      chatHistory.push({ role: 'system', content: responseText });
     } catch (error) {
       console.error("Error with OpenAI:", error);
-      response.push({ type: 'text', content: "Sorry, I encountered an error processing your request." });
+      let errorMessage = "Sorry, I encountered an error processing your request.";
+      response.push({ type: 'text', content: errorMessage });
+      chatHistory.push({ role: 'system', content: errorMessage });
     }
   }
 });
