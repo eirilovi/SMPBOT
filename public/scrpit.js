@@ -3,8 +3,10 @@ let selectedCategory = null;
 document.addEventListener('DOMContentLoaded', function () {
   const chatbotToggler = document.querySelector(".chatbot-toggler");
   const chatbot = document.querySelector(".chatbot");
+  const chatbotCloseBtn = document.getElementById('chatbot-close');
   let isChatbotInitialized = false;
 
+  
   function getArticleIdFromUrl() {
     const url = new URL(window.location.href);
     const pathname = url.pathname;
@@ -442,13 +444,20 @@ const formatArticleMessage = (article) => {
       });
   }
 
-    // Function to toggle the chat window and initialize chatbot
-    chatbotToggler.addEventListener('click', function() {
-      if (!chatbot.classList.contains('show-chatbot') && !chatbot.classList.contains('initialized')) {
-          initializeChatbot();
-          chatbot.classList.add('initialized');
-      }
-      chatbot.classList.toggle("show-chatbot");
+  // Function to toggle the chat window and initialize chatbot
+  chatbotToggler.addEventListener('click', function() {
+    // If the chatbot is not initialized yet, initialize it
+    if (!chatbot.classList.contains('initialized')) {
+      initializeChatbot();
+      chatbot.classList.add('initialized');
+    }
+    chatbot.classList.toggle("show-chatbot");
+  });
+
+  // Add event listener for the chatbot close button
+  chatbotCloseBtn.addEventListener('click', function() {
+    // Hide the chatbot when the close button is clicked
+    chatbot.classList.remove("show-chatbot");
   });
 
   fetch('../header.component.html')
