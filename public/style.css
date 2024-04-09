@@ -75,10 +75,12 @@ body {
 }
 
 .article-message {
-  background-color: #f0f0f0;
-  padding: 10px;
+  /* background-color: #f9f9f9;  Lighter background for better readability */
+  padding-top: 15px;
+  padding-bottom: 15px;
   margin: 5px 0;
-  border-radius: 5px;
+  font-family: 'Poppins', sans-serif; /* Use Poppins for a cleaner look */
+  color: #084c9c; /* Darker text for better contrast */
 }
 
 .article-message a {
