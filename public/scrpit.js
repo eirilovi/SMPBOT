@@ -341,44 +341,72 @@ const handleCategoryAction = (category, action) => {
 
 
 const generateResponse = (userMessage) => {
-  fetch('http://localhost:3000/ask', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ message: userMessage }),
-  })
-  .then(response => response.json())
-  .then(data => {
-    // Here we're assuming 'data.response' is an array of responses.
-    // We need to ensure that we're correctly iterating over this array
-    // and handling each response based on its type.
-    data.response.forEach((item) => {
-      let chatBubble;
-      if (item.type === 'text') {
-        // For text responses
-        chatBubble = createChatLi(item.content, "incoming");
-      } else if (item.type === 'article') {
-        // For article responses, we format them appropriately
-        const articleMessage = formatArticleMessage(item);
-        chatBubble = createChatLi(articleMessage, "incoming");
-      }
-      if (chatBubble) {
-        chatbox.appendChild(chatBubble);
-      }
+  const userMessageLower = userMessage.toLowerCase();
+  showTypingAnimation(); // Start the typing animation
+
+  if (userMessageLower.includes("hvilke kategorier")) {
+    // Handle hardcoded response for categories
+    setTimeout(() => {
+      fetchAndDisplayCategories().then(() => {
+        hideTypingAnimation(); // Hide animation after fetch
+      }).catch(error => {
+        console.error('Error fetching categories:', error);
+        chatbox.appendChild(createChatLi("Sorry, I am unable to fetch categories at the moment.", "incoming"));
+        hideTypingAnimation(); // Hide animation on error
+      });
+    }, 1500);
+  } else {
+    // Determine the endpoint based on whether the message is a category or general question
+    let endpoint;
+    if (window.chatCategories && window.chatCategories.map(c => c.toLowerCase()).includes(userMessageLower)) {
+      selectedCategory = window.chatCategories.find(c => c.toLowerCase() === userMessageLower);
+      endpoint = `/Articles/${selectedCategory}`;
+    } else {
+      endpoint = '/ask';
+    }
+
+    fetch(`http://localhost:3000${endpoint}`, {
+      method: endpoint === '/ask' ? 'POST' : 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: endpoint === '/ask' ? JSON.stringify({ message: userMessage }) : null,
+    })
+    .then(response => response.json())
+    .then(data => {
+      setTimeout(() => {
+        hideTypingAnimation(); // Hide the typing animation
+        if (data && data.response) {
+          if (Array.isArray(data.response)) {
+            // Handle an array of responses
+            data.response.forEach((item) => {
+              let chatBubble;
+              if (item.type === 'text') {
+                chatBubble = createChatLi(item.content, "incoming");
+              } else if (item.type === 'article') {
+                const articleMessage = formatArticleMessage(item);
+                chatBubble = createChatLi(articleMessage, "incoming");
+              }
+              if (chatBubble) {
+                chatbox.appendChild(chatBubble);
+              }
+            });
+          } else {
+            // Handle a single response
+            chatbox.appendChild(createChatLi(data.response, "incoming"));
+          }
+        } else {
+          chatbox.appendChild(createChatLi("Received data, but format was unexpected.", "incoming"));
+        }
+        chatbox.scrollTop = chatbox.scrollHeight;
+      }, 1500);
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      hideTypingAnimation(); // Hide animation on error
+      chatbox.appendChild(createChatLi("Sorry, there was an error processing your message.", "incoming"));
     });
-    chatbox.scrollTop = chatbox.scrollHeight;
-  })
-  .catch(error => {
-    console.error('Error:', error);
-    const errorMessage = createChatLi("Sorry, there was an error processing your message.", "incoming");
-    chatbox.appendChild(errorMessage);
-    chatbox.scrollTop = chatbox.scrollHeight;
-  })
-  .finally(() => {
-    // Hide the typing animation here if you have one
-    hideTypingAnimation();
-  });
+  }
 };
 
 const formatArticleMessage = (article) => {
