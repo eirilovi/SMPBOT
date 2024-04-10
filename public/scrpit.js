@@ -3,7 +3,6 @@ let selectedCategory = null;
 document.addEventListener('DOMContentLoaded', function () {
   const chatbotToggler = document.querySelector(".chatbot-toggler");
   const chatbot = document.querySelector(".chatbot");
-  const chatbotCloseBtn = document.getElementById('chatbot-close');
   let isChatbotInitialized = false;
 
   
@@ -452,12 +451,6 @@ const formatArticleMessage = (article) => {
       chatbot.classList.add('initialized');
     }
     chatbot.classList.toggle("show-chatbot");
-  });
-
-  // Add event listener for the chatbot close button
-  chatbotCloseBtn.addEventListener('click', function() {
-    // Hide the chatbot when the close button is clicked
-    chatbot.classList.remove("show-chatbot");
   });
 
   fetch('../header.component.html')
