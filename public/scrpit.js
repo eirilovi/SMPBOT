@@ -1,6 +1,7 @@
 let selectedCategory = null;
-
+let chatInput; // Declare it globally
 document.addEventListener('DOMContentLoaded', function () {
+  chatInput = document.querySelector(".chat-input textarea"); // Initialize it once the DOM is fully loaded
   const chatbotToggler = document.querySelector(".chatbot-toggler");
   const chatbot = document.querySelector(".chatbot");
   let isChatbotInitialized = false;
