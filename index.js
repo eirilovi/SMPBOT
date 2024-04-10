@@ -26,7 +26,7 @@ app.use(express.static("public")); // Serve static files
 //const ArticlesData = JSON.parse(fs.readFileSync(path.join(__dirname, 'sample_Articles.json'), 'utf8'));
 //const categories = Object.keys(ArticlesData);
 let chatHistory = [
-  { role: 'system', content: ''}
+  { role: 'system', content: 'You are a friendly chatbot helper. You will answer the users question and then recommend that the user should utilize the buttons above, as they are very helpful. you will only communicate in "new norwegian, nynorsk"'}
 ];; // Store the chat history
 
 // Function to check FAQs
@@ -336,6 +336,95 @@ app.post('/ask', async (req, res) => {
       response.push({ type: 'text', content: errorMessage });
       chatHistory.push({ role: 'system', content: errorMessage });
     }
+  }
+});
+
+// Endpoint to summarize an article
+app.get('/summarizeArticle/:id', async (req, res) => {
+  const { id } = req.params;
+
+  // Fetch the article content from Supabase
+  const { data: article, error } = await supabase
+    .from('Articles')
+    .select('content')
+    .eq('id', id)
+    .single();
+
+  if (error || !article) {
+    return res.status(500).send('Error fetching article or article not found');
+  }
+
+  // Prepare prompt for GPT-3-turbo
+  const prompt = 
+  
+  `You are a Norwegian journalist who will provide a concise summary of the following news article, adhering to these strict guidelines. You understand, read and write both in Norwegian bokmål and norwegian nynorsk. The distinction between the two is of high importance:
+
+  Output:
+  
+  Use Norwegian language and detect if the article is written in norwegian nynorsk or norwegian bokmål. Do not write in clear text what language the article is written in, but use the language detected to write your response.
+  
+  If the article is written in norwegian nynorsk, write the summary using norwegian nynorsk, and if the article is written in norwegian bokmål, write the summary using norwegian bokmål. The distinction between nynorsk and bokmål is of high importance.
+  
+  Use Markdown-formatted bullet points for structure.
+  
+  Limit to 3-5 bullet points.
+  
+  Limit each bullet point to no more than 10-15 words.
+  
+  Content:
+  
+  Address the key questions: Who, What, Where, When, and importantly, Why is this story important to know about?
+  
+  Ensure the language is clear and easily comprehensible, suitable for readers aged 20-30.
+  
+  Maintain journalistic integrity and avoid factual errors or hallucinations. \n\n${article.content}`;
+
+  try {
+    const openAIResponse = await openai.createChatCompletion({
+      model: 'gpt-3.5-turbo',
+      messages: [{role: 'system', content: prompt}],
+      max_tokens: 300,
+    });
+
+    const summary = openAIResponse.data.choices[0].message.content.trim();
+    res.json({ summary });
+  } catch (error) {
+    console.error("Error with OpenAI:", error);
+    res.status(500).send('Error summarizing article');
+  }
+});
+
+// Endpoint to get similar articles by tags
+app.get('/similarArticles/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Fetch the tags for the current article
+    const { data: currentArticle, error: currentArticleError } = await supabase
+      .from('Articles')
+      .select('tags')
+      .eq('id', id)
+      .single();
+
+    if (currentArticleError) throw currentArticleError;
+    
+    // Assuming the tags are stored as a comma-separated string
+    const tags = currentArticle.tags.split(',');
+
+    // Now fetch articles that share these tags, excluding the current article
+    const { data: similarArticles, error: similarArticlesError } = await supabase
+      .from('Articles')
+      .select('id, title, url')
+      .in('tags', tags)
+      .not('id', 'eq', id) // Exclude the current article
+      .limit(5); // Limit to 5 similar articles
+
+    if (similarArticlesError) throw similarArticlesError;
+    
+    res.json(similarArticles);
+  } catch (error) {
+    console.error('Error fetching similar articles:', error);
+    res.status(500).send('Error fetching similar articles');
   }
 });
 

@@ -1,9 +1,111 @@
 let selectedCategory = null;
 
+
+// Define the showTypingAnimation function
+function showTypingAnimation() {
+  const chatbox = document.querySelector(".chatbox")
+  const typingLi = document.createElement('li');
+  typingLi.classList.add('chat', 'incoming');
+  typingLi.id = 'typing-animation';
+
+  const icon = document.createElement("span");
+  icon.classList.add("material-symbols-outlined");
+  icon.textContent = "smart_toy";
+  typingLi.appendChild(icon);
+
+  const typingAnimationContainer = document.createElement('div');
+  typingAnimationContainer.classList.add('typing-animation');
+
+  for (let i = 0; i < 3; i++) {
+      const dot = document.createElement('div');
+      dot.classList.add('typing-dot');
+      typingAnimationContainer.appendChild(dot);
+  }
+
+  typingLi.appendChild(typingAnimationContainer);
+  chatbox.appendChild(typingLi);
+  chatbox.scrollTop = chatbox.scrollHeight;
+}
+
+// Define the hideTypingAnimation function
+function hideTypingAnimation() {
+  const typingLi = document.getElementById('typing-animation');
+  if (typingLi) {
+      typingLi.remove();
+  }
+}
+
+    // Define the createChatLi function
+    const createChatLi = (message, className) => {
+      const chatLi = document.createElement("li");
+      chatLi.classList.add("chat", className);
+      // If the message is an element (like our buttons container), append it directly
+      if (message instanceof Element) {
+          chatLi.appendChild(message);
+      } else if (message) { // Only create the <p> if there is a message
+          // Assume it's text content and create a <p> for it
+          const chatContent = document.createElement("p");
+          chatContent.innerHTML = message;
+          if(className === "outgoing") {
+              chatLi.appendChild(chatContent);
+          } else {
+              const icon = document.createElement("span");
+              icon.classList.add("material-symbols-outlined");
+              icon.textContent = "smart_toy";
+              chatLi.appendChild(icon);
+              chatLi.appendChild(chatContent);
+          }
+      }
+      
+      return chatLi;
+  };
+
+  const handleCategoryAction = (category, action) => {
+    let endpoint = '';
+    const chatbox = document.querySelector(".chatbox")
+    switch (action) {
+      case 'latest':
+        endpoint = `/Articles/${category}/latest`;
+        break;
+      case 'important':
+        endpoint = `/Articles/${category}/important`;
+        break;
+      case 'random':
+        endpoint = `/Articles/${category}/random`;
+        break;
+      default:
+        chatbox.appendChild(createChatLi("Unknown action.", "incoming"));
+        return;
+    }
+  
+    fetch(`http://localhost:3000${endpoint}`)
+      .then(response => response.json())
+      .then(articles => {
+        if (articles.length === 0) {
+          chatbox.appendChild(createChatLi("There are no articles available for this selection.", "incoming"));
+        } else {
+          // Use the map function to iterate over articles and create anchor elements
+          const articlesHtml = articles.map(article => {
+            const anchorElement = document.createElement('a');
+            anchorElement.href = article.url;
+            anchorElement.textContent = article.title;
+            anchorElement.target = "_blank";
+            return anchorElement.outerHTML; // Get the HTML string of the anchor element
+          }).join('<br><br>'); // Join them with a line break
+          
+          // Create a chat message with the articles HTML
+          chatbox.appendChild(createChatLi(articlesHtml, "incoming"));
+        }
+        chatbox.scrollTop = chatbox.scrollHeight;
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        chatbox.appendChild(createChatLi("Sorry, there was an error fetching the articles.", "incoming"));
+      });
+  };
 document.addEventListener('DOMContentLoaded', function () {
   const chatbotToggler = document.querySelector(".chatbot-toggler");
   const chatbot = document.querySelector(".chatbot");
-  const chatbotCloseBtn = document.getElementById('chatbot-close');
   let isChatbotInitialized = false;
 
   
@@ -17,6 +119,92 @@ document.addEventListener('DOMContentLoaded', function () {
 
     return null;
   }
+
+  function runArticle(articleId) {
+    showTypingAnimation();
+    fetch(`http://localhost:3000/summarizeArticle/${articleId}`)
+      .then(response => response.json())
+      .then(data => {
+        hideTypingAnimation();
+        if (data.summary) {
+          // Split the summary into sentences, then join with double line breaks
+          const sentences = data.summary.split(/(?<=[.!?])\s+/);
+          const formattedSummary = sentences.join('<br><br>');
+  
+          const summaryLi = createChatLi(formattedSummary, "incoming");
+          const chatbox = document.querySelector(".chatbox");
+          chatbox.appendChild(summaryLi);
+          chatbox.scrollTop = chatbox.scrollHeight;
+        }
+      })
+      .catch(error => {
+        console.error('Error summarizing article:', error);
+        const errorMessage = "Sorry, there was an error summarizing the article.";
+        const errorLi = createChatLi(errorMessage, "incoming");
+        const chatbox = document.querySelector(".chatbox");
+        chatbox.appendChild(errorLi);
+        chatbox.scrollTop = chatbox.scrollHeight;
+      }).finally(hideTypingAnimation);
+  }
+  
+
+  function fetchSimilarArticles(articleId) {
+    fetch(`http://localhost:3000/similarArticles/${articleId}`)
+        .then(response => response.json())
+        .then(similarArticles => {
+            const chatbox = document.querySelector(".chatbox");
+
+            // Start by showing the typing animation
+            showTypingAnimation();
+
+            // Introduce a small delay before showing intro message
+            setTimeout(() => {
+                hideTypingAnimation();
+                const introMessage = "Her er noen lignende artikler du kanskje vil like:";
+                const introLi = createChatLi(introMessage, "incoming");
+                chatbox.appendChild(introLi);
+
+                if (similarArticles && similarArticles.length > 0) {
+                    processArticles(similarArticles, 0, chatbox);
+                } else {
+                    const noArticlesMessage = "Ingen lignende artikler funnet.";
+                    const noArticlesLi = createChatLi(noArticlesMessage, "incoming");
+                    chatbox.appendChild(noArticlesLi);
+                    chatbox.scrollTop = chatbox.scrollHeight;
+                }
+            }, 1500); // adjust delay as needed
+        })
+        .catch(error => {
+            console.error('Error fetching similar articles:', error);
+            hideTypingAnimation();
+            const errorMessage = "Beklager, det oppstod en feil ved henting av lignende artikler.";
+            const errorLi = createChatLi(errorMessage, "incoming");
+            chatbox.appendChild(errorLi);
+            chatbox.scrollTop = chatbox.scrollHeight;
+        });
+}
+
+function processArticles(articles, index, chatbox) {
+    if (index < articles.length) {
+        showTypingAnimation();
+
+        // Introduce a small delay for visual effect
+        setTimeout(() => {
+            hideTypingAnimation();
+            const article = articles[index];
+            const articleInfo = `${article.title} <a href="${article.url}" target="_blank">${article.url}</a>`;
+            const articleLi = createChatLi(articleInfo, "incoming");
+            chatbox.appendChild(articleLi);
+
+            // Process the next article
+            processArticles(articles, index + 1, chatbox);
+        }, 1500); // adjust delay as needed
+    } else {
+        // All articles processed
+        chatbox.scrollTop = chatbox.scrollHeight;
+    }
+}
+
 
   //Function to initialize Chatbot
   function initializeChatbot() {
@@ -59,8 +247,8 @@ document.addEventListener('DOMContentLoaded', function () {
         setTimeout(() => {
           hideTypingAnimation();
           const clickButtonMessage = articleId
-            ? "Trykk på en av artikkel-knappene, eller spør et spørsmål i chatten. :D"
-            : "Trykk på en av knappene, eller spør et spørsmål i chatten. :D";
+            ? "Trykk på en av artikkel-knappene, eller spør et spørsmål i chatten. 😊"
+            : "Trykk på en av knappene, eller spør et spørsmål i chatten. 😊";
   
           chatbox.appendChild(createChatLi(clickButtonMessage, "incoming"));
           chatbox.scrollTop = chatbox.scrollHeight;
@@ -69,31 +257,6 @@ document.addEventListener('DOMContentLoaded', function () {
       }, 1500); // Delay for the second thinking animation
   
     }, 1500); // Delay for the first thinking animation
-
-    // Define the createChatLi function
-    const createChatLi = (message, className) => {
-        const chatLi = document.createElement("li");
-        chatLi.classList.add("chat", className);
-        // If the message is an element (like our buttons container), append it directly
-        if (message instanceof Element) {
-            chatLi.appendChild(message);
-        } else if (message) { // Only create the <p> if there is a message
-            // Assume it's text content and create a <p> for it
-            const chatContent = document.createElement("p");
-            chatContent.innerHTML = message;
-            if(className === "outgoing") {
-                chatLi.appendChild(chatContent);
-            } else {
-                const icon = document.createElement("span");
-                icon.classList.add("material-symbols-outlined");
-                icon.textContent = "smart_toy";
-                chatLi.appendChild(icon);
-                chatLi.appendChild(chatContent);
-            }
-        }
-        
-        return chatLi;
-    };
   
 // Define the createFaqButtons function
 const createFaqButtons = () => {
@@ -147,7 +310,7 @@ const createFaqButtons = () => {
   function createArticleButtons() {
     const articleButtons = [
       { text: "Oppsummer artikkel", pattern: "summarize article" },
-      { text: "Lignende artikler", pattern: "similar articles" },
+      { text: "Lignende artikler", pattern: "similar articles", id: articleId },
       { text: "Placeholder 3", pattern: "placeholder3" },
       { text: "Placeholder 4", pattern: "placeholder4" }
     ];
@@ -158,6 +321,15 @@ const createFaqButtons = () => {
     articleButtons.forEach(btn => {
       const button = document.createElement('button');
       button.classList.add('faq-button', 'category-button');
+      if (btn.pattern === 'summarize article') {
+        button.classList.add('summarize-article-button'); // Add this class to match the event listener selector
+            // Event listener for 'Oppsummer artikkel' button
+      button.onclick = () => {runArticle(articleId)}
+        //button.setAttribute('data-article-id', articleId); // Set the article ID here
+      }
+      if (btn.pattern === "similar articles") {
+        button.onclick = () => {fetchSimilarArticles(btn.id)};
+      }
       button.setAttribute('data-pattern', btn.pattern);
       button.textContent = btn.text;
       buttonsContainer.appendChild(button);
@@ -166,41 +338,6 @@ const createFaqButtons = () => {
     return buttonsContainer;
   }
 
-  // Call createFaqButtons to create and append FAQ buttons once
-  //createFaqButtons();
-
-    // Define the showTypingAnimation function
-    function showTypingAnimation() {
-      const typingLi = document.createElement('li');
-      typingLi.classList.add('chat', 'incoming');
-      typingLi.id = 'typing-animation';
-
-      const icon = document.createElement("span");
-      icon.classList.add("material-symbols-outlined");
-      icon.textContent = "smart_toy";
-      typingLi.appendChild(icon);
-
-      const typingAnimationContainer = document.createElement('div');
-      typingAnimationContainer.classList.add('typing-animation');
-
-      for (let i = 0; i < 3; i++) {
-          const dot = document.createElement('div');
-          dot.classList.add('typing-dot');
-          typingAnimationContainer.appendChild(dot);
-      }
-
-      typingLi.appendChild(typingAnimationContainer);
-      chatbox.appendChild(typingLi);
-      chatbox.scrollTop = chatbox.scrollHeight;
-  }
-
-  // Define the hideTypingAnimation function
-  function hideTypingAnimation() {
-      const typingLi = document.getElementById('typing-animation');
-      if (typingLi) {
-          typingLi.remove();
-      }
-  }
 
   const fetchAndDisplayCategories = () => {
     return new Promise((resolve, reject) => {
@@ -238,6 +375,14 @@ const createFaqButtons = () => {
                     { text: "Tilfeldig artikkel", action: "random" }
                   ];
                   
+                  function articleButton(selectedCategory, action) {
+                    showTypingAnimation(); // Show typing animation on option button click
+                    setTimeout(() => { // Simulate processing time for action handling
+                      handleCategoryAction(selectedCategory, action);
+                      hideTypingAnimation(); // Hide typing animation after processing
+                    }, 1500); // Adjust the timeout duration as per your requirements
+                  };
+
                   options.forEach(opt => {
                     const optionButton = document.createElement('button');
                     optionButton.classList.add('option-button', 'faq-button');
@@ -246,14 +391,7 @@ const createFaqButtons = () => {
                     optionsContainer.appendChild(optionButton);
   
                     // Attach event listeners to each option button
-                    optionButton.addEventListener('click', function() {
-                      showTypingAnimation(); // Show typing animation on option button click
-                      const action = this.getAttribute('data-action');
-                      setTimeout(() => { // Simulate processing time for action handling
-                        handleCategoryAction(selectedCategory, action);
-                        hideTypingAnimation(); // Hide typing animation after processing
-                      }, 1500); // Adjust the timeout duration as per your requirements
-                    });
+                    optionButton.onclick = () => {articleButton(selectedCategory, opt.action)}  
                   });
   
                   chatbox.appendChild(createChatLi(optionsContainer, "incoming"));
@@ -280,67 +418,6 @@ const createFaqButtons = () => {
         });
     });
   };
-
-  // Function to display articles for a category
-const displayArticlesForCategory = (category) => {
-  fetch(`http://localhost:3000/articles/${category}`)
-    .then(response => response.json())
-    .then(articles => {
-      let message = articles.map(article => `- ${article.title}`).join('\n');
-      chatbox.appendChild(createChatLi(message, "incoming"));
-      chatbox.scrollTop = chatbox.scrollHeight;
-    })
-    .catch(error => {
-      console.error('Error fetching articles:', error);
-      chatbox.appendChild(createChatLi(`Sorry, I was unable to fetch articles for ${category}.`, "incoming"));
-      chatbox.scrollTop = chatbox.scrollHeight;
-    });
-};
-
-// Function to handle actions for a selected category
-const handleCategoryAction = (category, action) => {
-  let endpoint = '';
-  switch (action) {
-    case 'latest':
-      endpoint = `/Articles/${category}/latest`;
-      break;
-    case 'important':
-      endpoint = `/Articles/${category}/important`;
-      break;
-    case 'random':
-      endpoint = `/Articles/${category}/random`;
-      break;
-    default:
-      chatbox.appendChild(createChatLi("Unknown action.", "incoming"));
-      return;
-  }
-
-  fetch(`http://localhost:3000${endpoint}`)
-    .then(response => response.json())
-    .then(articles => {
-      if (articles.length === 0) {
-        chatbox.appendChild(createChatLi("There are no articles available for this selection.", "incoming"));
-      } else {
-        // Use the map function to iterate over articles and create anchor elements
-        const articlesHtml = articles.map(article => {
-          const anchorElement = document.createElement('a');
-          anchorElement.href = article.url;
-          anchorElement.textContent = article.title;
-          anchorElement.target = "_blank";
-          return anchorElement.outerHTML; // Get the HTML string of the anchor element
-        }).join('<br><br>'); // Join them with a line break
-        
-        // Create a chat message with the articles HTML
-        chatbox.appendChild(createChatLi(articlesHtml, "incoming"));
-      }
-      chatbox.scrollTop = chatbox.scrollHeight;
-    })
-    .catch(error => {
-      console.error('Error:', error);
-      chatbox.appendChild(createChatLi("Sorry, there was an error fetching the articles.", "incoming"));
-    });
-};
-
 
 const generateResponse = (userMessage) => {
   const userMessageLower = userMessage.toLowerCase();
@@ -454,27 +531,12 @@ const formatArticleMessage = (article) => {
     chatbot.classList.toggle("show-chatbot");
   });
 
-  // Add event listener for the chatbot close button
-  chatbotCloseBtn.addEventListener('click', function() {
-    // Hide the chatbot when the close button is clicked
-    chatbot.classList.remove("show-chatbot");
-  });
-
   fetch('../header.component.html')
     .then(response => response.text())
     .then(data => {
         document.getElementById('header-placeholder').innerHTML = data;
     })
     .catch(error => console.error('Error loading the header component:', error));
-
-// Handle enter key for sending a message
-chatInput.addEventListener("keypress", function(event) {
-  if (event.key === "Enter") {
-    event.preventDefault();
-    console.log("Enter pressed"); // Debugging log
-    sendChatBtn.click();
-  }
-});
 
   function navigateTo(path) {
     // Assuming 'path' already includes the '.html' extension as needed
@@ -496,8 +558,8 @@ chatInput.addEventListener("keypress", function(event) {
       const href = event.target.getAttribute('href');
       navigateTo(href);
     }
-  });
-  
+  });    
+    
   // Handle back/forward browser navigation
   window.addEventListener('popstate', function() {
     navigateTo(window.location.pathname);
