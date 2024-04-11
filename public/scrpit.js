@@ -538,18 +538,38 @@ const formatArticleMessage = (article) => {
     })
     .catch(error => console.error('Error loading the header component:', error));
 
-  function navigateTo(path) {
-    // Assuming 'path' already includes the '.html' extension as needed
-    const url = `http://localhost:3000/${path}`; // Construct the full URL
+    function navigateTo(path) {
+      fetch(`http://localhost:3000/${path}`)
+          .then(response => response.text())
+          .then(html => {
+              document.getElementById('main-content').innerHTML = html;
+              window.history.pushState({}, '', `http://localhost:3000/${path}`);
     
-    fetch(url)
-        .then(response => response.text())
-        .then(html => {
-            document.getElementById('main-content').innerHTML = html;
-            window.history.pushState({}, '', url); // Update the URL displayed in the browser
-        })
-        .catch(error => console.error('Error fetching content:', error));
-}
+              // Extract article ID from the URL
+              const articleId = path.includes('article.html') ? new URLSearchParams(new URL(path, document.baseURI).search).get('id') : null;
+              if (articleId) {
+                  updateChatbotForArticle(articleId);
+              }
+          })
+          .catch(error => console.error('Error fetching content:', error));
+    }
+    
+    function updateChatbotForArticle(articleId) {
+      fetch(`http://localhost:3000/Articles/${articleId}`)
+          .then(response => response.json())
+          .then(article => {
+              if (article) {
+                  // Updating the chatbot state
+                  const chatbox = document.querySelector(".chatbox");
+                  chatbox.appendChild(createChatLi(`Article Title: ${article.title}`, "incoming"));
+                  chatbox.appendChild(createChatLi(`Article Author: ${article.author}`, "incoming"));
+                  chatbox.appendChild(createChatLi(`Article Content: ${article.content.substring(0, 300)}...`, "incoming"));
+                  chatbox.scrollTop = chatbox.scrollHeight;
+              }
+          })
+          .catch(error => console.error('Error fetching article:', error));
+    }
+    
   
   // Listen for click events on your navigation links/buttons
   document.addEventListener('click', function(event) {

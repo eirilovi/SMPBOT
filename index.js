@@ -78,7 +78,7 @@ async function fetchYouthArticles() {
   try {
       const { data, error } = await supabase
           .from('Articles')
-          .select('title')
+          .select('*')
           .ilike('tags', '%Ungdom%')
           .limit(5);
 
@@ -134,11 +134,27 @@ app.get('/Articles/:id', async (req, res) => {
   }
 
   if (data) {
+    // Update chat history with article's title, author, and content
+    chatHistory.push({ 
+      role: 'system', 
+      content: `Article Title: ${data.title}` 
+    });
+    chatHistory.push({ 
+      role: 'system', 
+      content: `Article Author: ${data.author}`
+    });
+    chatHistory.push({ 
+      role: 'system', 
+      content: `Article Content: ${data.content.substring(0, 300)}...` // Limit the content size
+    });
+
     res.json(data);
   } else {
     res.status(404).send('Article not found');
   }
 });
+
+
 
 // Endpoint to get Articles by category from Supabase
 app.get('/Articles/:category', async (req, res) => {
