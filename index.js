@@ -66,7 +66,7 @@ app.get('/relevantArticles', async (req, res) => {
 
         // Return articles as JSON
         res.json({
-            message: "Hei dette er de siste og mest relevante artiklene for i dag:",
+            message: "Dette er de siste og mest relevante artiklene for i dag: 😊",
             articles: topArticles
         });
     } else {
@@ -375,7 +375,7 @@ app.get('/summarizeArticle/:id', async (req, res) => {
   // Prepare prompt for GPT-3-turbo
   const prompt = 
   
-  `Write an ULTRA-SHORT summary in norwegian about this article in THREE bullet points that are spaced out with paragraphs: \n\n${article.content}`;
+  `Write an ULTRA-SHORT summary in norwegian about this article in ONLY THREE bullet points that are SEPERATED WITH PARAGRAPHS: \n\n${article.content}`;
 
   try {
     const openAIResponse = await openai.createChatCompletion({
@@ -392,7 +392,42 @@ app.get('/summarizeArticle/:id', async (req, res) => {
   }
 });
 
-// Endpoint to get similar articles by tags
+app.get('/articlesInSeries/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Fetch the series information for the current article
+    const { data: articleData, error: articleError } = await supabase
+      .from('Articles')
+      .select('series')
+      .eq('id', id)
+      .single();
+
+    if (articleError) {
+      throw articleError;
+    }
+
+    // Parse the series data assuming it might be comma-separated
+    const seriesIds = articleData.series.split(',').map(s => s.trim());
+
+    // Fetch all articles from the same series
+    const { data: seriesArticles, error: seriesError } = await supabase
+      .from('Articles')
+      .select('id, title, url')
+      .in('series', seriesIds)
+      .not('id', 'eq', id); // Optionally exclude the current article from the list
+
+    if (seriesError) {
+      throw seriesError;
+    }
+
+    res.json(seriesArticles);
+  } catch (error) {
+    console.error('Error fetching articles in series:', error);
+    res.status(500).send('Error fetching articles in series');
+  }
+});
+
 app.get('/similarArticles/:id', async (req, res) => {
   const { id } = req.params;
 
@@ -404,28 +439,48 @@ app.get('/similarArticles/:id', async (req, res) => {
       .eq('id', id)
       .single();
 
-    if (currentArticleError) throw currentArticleError;
-    
-    // Assuming the tags are stored as a comma-separated string
-    const tags = currentArticle.tags.split(',');
+    if (currentArticleError) {
+      console.error('Error fetching article tags:', currentArticleError);
+      throw currentArticleError;
+    }
 
-    // Now fetch articles that share these tags, excluding the current article
-    const { data: similarArticles, error: similarArticlesError } = await supabase
-      .from('Articles')
-      .select('id, title, url')
-      .in('tags', tags)
-      .not('id', 'eq', id) // Exclude the current article
-      .limit(5); // Limit to 5 similar articles
+    // Split tags and remove extra spaces
+    const tags = currentArticle.tags.split(',').map(tag => tag.trim());
+    let articlesFound = new Map();
 
-    if (similarArticlesError) throw similarArticlesError;
-    
-    res.json(similarArticles);
+    for (let tag of tags) {
+      const { data: articlesByTag, error: tagError } = await supabase
+        .from('Articles')
+        .select('id, title, url')
+        .ilike('tags', `%${tag}%`) // Use ILIKE for case-insensitive matching
+        .not('id', 'eq', id); // Exclude the current article
+
+      if (tagError) {
+        console.error('Error fetching articles by tag:', tagError);
+        continue; // Skip to the next tag on error
+      }
+
+      // Add or update the count of matching tags for each article
+      articlesByTag.forEach(article => {
+        if (!articlesFound.has(article.id)) {
+          articlesFound.set(article.id, { ...article, tagCount: 1 });
+        } else {
+          articlesFound.get(article.id).tagCount += 1;
+        }
+      });
+    }
+
+    // Sort articles by the number of matching tags, descending, and limit to the top 3
+    const sortedArticles = Array.from(articlesFound.values())
+      .sort((a, b) => b.tagCount - a.tagCount)
+      .slice(0, 3);
+
+    res.json(sortedArticles);
   } catch (error) {
     console.error('Error fetching similar articles:', error);
     res.status(500).send('Error fetching similar articles');
   }
 });
-
 
 app.get("", (req, res) => {
   res.sendFile(path.join(__dirname, '/index.html'));
