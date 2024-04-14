@@ -60,49 +60,73 @@ function hideTypingAnimation() {
       return chatLi;
   };
 
+  function processArticles(articles, index, chatbox) {
+    if (index < articles.length) {
+        showTypingAnimation();
+
+        // Introduce a small delay for visual effect
+        setTimeout(() => {
+            hideTypingAnimation();
+            const article = articles[index];
+            const articleInfo = `${article.title} <a href="${article.url}" target="_blank">${article.url}</a>`;
+            const articleLi = createChatLi(articleInfo, "incoming");
+            chatbox.appendChild(articleLi);
+
+            // Process the next article
+            processArticles(articles, index + 1, chatbox);
+        }, 1500); // adjust delay as needed
+    } else {
+        // All articles processed
+        chatbox.scrollTop = chatbox.scrollHeight;
+    }
+}
+
   const handleCategoryAction = (category, action) => {
     let endpoint = '';
-    const chatbox = document.querySelector(".chatbox")
+    const chatbox = document.querySelector(".chatbox");
+
     switch (action) {
-      case 'latest':
-        endpoint = `/Articles/${category}/latest`;
-        break;
-      case 'important':
-        endpoint = `/Articles/${category}/important`;
-        break;
-      case 'random':
-        endpoint = `/Articles/${category}/random`;
-        break;
-      default:
-        chatbox.appendChild(createChatLi("Unknown action.", "incoming"));
-        return;
+        case 'latest':
+            endpoint = `/Articles/${category}/latest`;
+            break;
+        case 'important':
+            endpoint = `/Articles/${category}/important`;
+            break;
+        case 'random':
+            endpoint = `/Articles/${category}/random`;
+            break;
+        default:
+            chatbox.appendChild(createChatLi("Unknown action.", "incoming"));
+            return;
     }
-  
+
+    // Show typing animation
+    showTypingAnimation();
+
     fetch(`http://localhost:3000${endpoint}`)
-      .then(response => response.json())
-      .then(articles => {
-        if (articles.length === 0) {
-          chatbox.appendChild(createChatLi("There are no articles available for this selection.", "incoming"));
-        } else {
-          // Use the map function to iterate over articles and create anchor elements
-          const articlesHtml = articles.map(article => {
-            const anchorElement = document.createElement('a');
-            anchorElement.href = article.url;
-            anchorElement.textContent = article.title;
-            anchorElement.target = "_blank";
-            return anchorElement.outerHTML; // Get the HTML string of the anchor element
-          }).join('<br><br>'); // Join them with a line break
-          
-          // Create a chat message with the articles HTML
-          chatbox.appendChild(createChatLi(articlesHtml, "incoming"));
-        }
-        chatbox.scrollTop = chatbox.scrollHeight;
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        chatbox.appendChild(createChatLi("Sorry, there was an error fetching the articles.", "incoming"));
-      });
-  };
+        .then(response => response.json())
+        .then(articles => {
+            hideTypingAnimation(); // Hide typing animation once the data is loaded
+
+            if (articles.length === 0) {
+                chatbox.appendChild(createChatLi("There are no articles available for this selection.", "incoming"));
+            } else {
+                const introMessage = "Her er noen artikler under kategorien " + category + " som du kanskje vil like:";
+                chatbox.appendChild(createChatLi(introMessage, "incoming"));
+
+                // Start processing articles from the first one
+                processArticles(articles, 0, chatbox);
+            }
+            chatbox.scrollTop = chatbox.scrollHeight;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            hideTypingAnimation();
+            chatbox.appendChild(createChatLi("Sorry, there was an error fetching the articles.", "incoming"));
+            chatbox.scrollTop = chatbox.scrollHeight;
+        });
+};
+
 document.addEventListener('DOMContentLoaded', function () {
   const chatbotToggler = document.querySelector(".chatbot-toggler");
   const chatbot = document.querySelector(".chatbot");
@@ -184,28 +208,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 }
 
-function processArticles(articles, index, chatbox) {
-    if (index < articles.length) {
-        showTypingAnimation();
-
-        // Introduce a small delay for visual effect
-        setTimeout(() => {
-            hideTypingAnimation();
-            const article = articles[index];
-            const articleInfo = `${article.title} <a href="${article.url}" target="_blank">${article.url}</a>`;
-            const articleLi = createChatLi(articleInfo, "incoming");
-            chatbox.appendChild(articleLi);
-
-            // Process the next article
-            processArticles(articles, index + 1, chatbox);
-        }, 1500); // adjust delay as needed
-    } else {
-        // All articles processed
-        chatbox.scrollTop = chatbox.scrollHeight;
-    }
-}
-
-
   //Function to initialize Chatbot
   function initializeChatbot() {
     const articleId = getArticleIdFromUrl();
@@ -221,7 +223,7 @@ function processArticles(articles, index, chatbox) {
     setTimeout(() => {
       hideTypingAnimation();
       const greetingMessage = articleId
-        ? `Velkommen til artikkel ${articleId}! Korleis kan eg hjelpa deg?`
+        ? `Velkommen til artikkel ${articleId}! Hvordan kan jeg hjelpe deg?`
         : "Hei! Jeg er Sunnmørspostens Chatbot!";
   
       chatbox.appendChild(createChatLi(greetingMessage, "incoming"));
@@ -247,8 +249,8 @@ function processArticles(articles, index, chatbox) {
         setTimeout(() => {
           hideTypingAnimation();
           const clickButtonMessage = articleId
-            ? "Trykk på en av artikkel-knappene, eller spør et spørsmål i chatten. 😊"
-            : "Trykk på en av knappene, eller spør et spørsmål i chatten. 😊";
+            ? "Trykk på en av artikkel-knappene, eller spør et spørsmål i chatten.😊"
+            : "Trykk på en av knappene, eller spør et spørsmål i chatten.😊";
   
           chatbox.appendChild(createChatLi(clickButtonMessage, "incoming"));
           chatbox.scrollTop = chatbox.scrollHeight;
@@ -267,8 +269,8 @@ const createFaqButtons = () => {
 
   const faqs = [
     { text: "Bli Abonnent", pattern: "bli abonnent" },
-    { text: "Relevante artikler", pattern: "relevante artikler" },
-    { text: "Artikler for Ungdom", pattern: "artikler ungdom" },
+    { text: "Relevante artikler", pattern: "fetch relevant articles" },
+    { text: "Artikler for Ungdom", pattern: "fetch ungdom articles" },  // Changed pattern
     { text: "Kategorier", pattern: "hvilke kategorier" }
   ];
 
@@ -298,12 +300,6 @@ const createFaqButtons = () => {
     // Append FAQ buttons to the chatbox
     chatbox.appendChild(createChatLi(buttonsContainer, "incoming"));
     chatbox.scrollTop = chatbox.scrollHeight;
-  
-    // Add a message after the FAQ buttons
-    //const clickButtonMessage = "Trykk på en av knappene, eller spør et spørsmål i chatten. :D";
-    //chatbox.appendChild(createChatLi(clickButtonMessage, "incoming"));
-    //chatbox.scrollTop = chatbox.scrollHeight;
-  
 };
 
   // Function to create article-specific buttons
@@ -311,8 +307,7 @@ const createFaqButtons = () => {
     const articleButtons = [
       { text: "Oppsummer artikkel", pattern: "summarize article" },
       { text: "Lignende artikler", pattern: "similar articles", id: articleId },
-      { text: "Placeholder 3", pattern: "placeholder3" },
-      { text: "Placeholder 4", pattern: "placeholder4" }
+      { text: "Placeholder 3", pattern: "placeholder3" }
     ];
 
     const buttonsContainer = document.createElement('div');
@@ -419,75 +414,131 @@ const createFaqButtons = () => {
     });
   };
 
-const generateResponse = (userMessage) => {
-  const userMessageLower = userMessage.toLowerCase();
-  showTypingAnimation(); // Start the typing animation
-
-  if (userMessageLower.includes("hvilke kategorier")) {
-    // Handle hardcoded response for categories
-    setTimeout(() => {
-      fetchAndDisplayCategories().then(() => {
-        hideTypingAnimation(); // Hide animation after fetch
-      }).catch(error => {
-        console.error('Error fetching categories:', error);
-        chatbox.appendChild(createChatLi("Sorry, I am unable to fetch categories at the moment.", "incoming"));
-        hideTypingAnimation(); // Hide animation on error
-      });
-    }, 1500);
-  } else {
-    // Determine the endpoint based on whether the message is a category or general question
-    let endpoint;
-    if (window.chatCategories && window.chatCategories.map(c => c.toLowerCase()).includes(userMessageLower)) {
-      selectedCategory = window.chatCategories.find(c => c.toLowerCase() === userMessageLower);
-      endpoint = `/Articles/${selectedCategory}`;
-    } else {
-      endpoint = '/ask';
-    }
-
-    fetch(`http://localhost:3000${endpoint}`, {
-      method: endpoint === '/ask' ? 'POST' : 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: endpoint === '/ask' ? JSON.stringify({ message: userMessage }) : null,
-    })
-    .then(response => response.json())
-    .then(data => {
-      setTimeout(() => {
-        hideTypingAnimation(); // Hide the typing animation
-        if (data && data.response) {
-          if (Array.isArray(data.response)) {
-            // Handle an array of responses
-            data.response.forEach((item) => {
-              let chatBubble;
-              if (item.type === 'text') {
-                chatBubble = createChatLi(item.content, "incoming");
-              } else if (item.type === 'article') {
-                const articleMessage = formatArticleMessage(item);
-                chatBubble = createChatLi(articleMessage, "incoming");
-              }
-              if (chatBubble) {
-                chatbox.appendChild(chatBubble);
-              }
+  const generateResponse = (userMessage) => {
+    const userMessageLower = userMessage.toLowerCase();
+    const chatbox = document.querySelector(".chatbox");
+    showTypingAnimation(); // Start the typing animation initially
+  
+    setTimeout(() => { // Introduce a uniform delay for all actions
+      hideTypingAnimation(); // Hide the initial typing animation
+  
+      if (userMessageLower.includes("hvilke kategorier")) {
+        showTypingAnimation();
+        setTimeout(() => {
+          fetchAndDisplayCategories().then(() => {
+            hideTypingAnimation(); // Hide animation after fetch
+          }).catch(error => {
+            console.error('Error fetching categories:', error);
+            chatbox.appendChild(createChatLi("Sorry, I am unable to fetch categories at the moment.", "incoming"));
+            hideTypingAnimation(); // Hide animation on error
+          });
+        }, 500);
+      } else if (userMessageLower.includes("fetch ungdom articles")) {
+        showTypingAnimation();
+        setTimeout(() => {
+          const endpoint = '/articlesUngdom';
+          fetch(`http://localhost:3000${endpoint}`)
+            .then(response => response.json())
+            .then(articles => {
+              hideTypingAnimation();
+              const introMessage = "Her er noen artikler for ungdom du kanskje vil like:";
+              chatbox.appendChild(createChatLi(introMessage, "incoming"));
+              chatbox.scrollTop = chatbox.scrollHeight; // Ensure scroll adjustment after the intro
+              processArticles(articles, 0, chatbox);
+            })
+            .catch(error => {
+              console.error('Error fetching articles for Ungdom:', error);
+              chatbox.appendChild(createChatLi("Sorry, there was an error fetching the articles.", "incoming"));
+              hideTypingAnimation();
             });
-          } else {
-            // Handle a single response
-            chatbox.appendChild(createChatLi(data.response, "incoming"));
-          }
+        }, 500);
+      } else if (userMessageLower.includes("fetch relevant articles")) {
+        showTypingAnimation();
+        setTimeout(() => {
+          const endpoint = '/relevantArticles';
+          fetch(`http://localhost:3000${endpoint}`)
+            .then(response => response.json())
+            .then(data => {
+              hideTypingAnimation();
+              if (data.articles && data.articles.length > 0) {
+                const introMessage = data.message;
+                chatbox.appendChild(createChatLi(introMessage, "incoming"));
+                chatbox.scrollTop = chatbox.scrollHeight; // Ensure scroll adjustment after the intro
+                processArticles(data.articles, 0, chatbox);
+              } else {
+                chatbox.appendChild(createChatLi("Det er for tiden ingen relevante artikler å vise.", "incoming"));
+              }
+            })
+            .catch(error => {
+              console.error('Error fetching relevant articles:', error);
+              chatbox.appendChild(createChatLi("Sorry, there was an error fetching the articles.", "incoming"));
+              hideTypingAnimation();
+            });
+        }, 500);
+      } else {
+        // Determine the endpoint based on whether the message is a category or general question
+        let endpoint;
+        if (window.chatCategories && window.chatCategories.map(c => c.toLowerCase()).includes(userMessageLower)) {
+          selectedCategory = window.chatCategories.find(c => c.toLowerCase() === userMessageLower);
+          endpoint = `/Articles/${selectedCategory}`;
         } else {
-          chatbox.appendChild(createChatLi("Received data, but format was unexpected.", "incoming"));
+          endpoint = '/ask';
         }
-        chatbox.scrollTop = chatbox.scrollHeight;
-      }, 1500);
-    })
-    .catch(error => {
-      console.error('Error:', error);
-      hideTypingAnimation(); // Hide animation on error
-      chatbox.appendChild(createChatLi("Sorry, there was an error processing your message.", "incoming"));
-    });
-  }
-};
-
+  
+        showTypingAnimation();
+        setTimeout(() => {
+          fetch(`http://localhost:3000${endpoint}`, {
+            method: endpoint === '/ask' ? 'POST' : 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: endpoint === '/ask' ? JSON.stringify({ message: userMessage }) : null,
+          })
+          .then(response => response.json())
+          .then(data => {
+            hideTypingAnimation();
+            if (data && data.response) {
+              if (Array.isArray(data.response)) {
+                // Handle an array of responses
+                data.response.forEach((item, index) => {
+                  setTimeout(() => {
+                    showTypingAnimation();
+                    setTimeout(() => {
+                      hideTypingAnimation();
+                      let chatBubble;
+                      if (item.type === 'text') {
+                        chatBubble = createChatLi(item.content, "incoming");
+                      } else if (item.type === 'article') {
+                        const articleMessage = formatArticleMessage(item);
+                        chatBubble = createChatLi(articleMessage, "incoming");
+                      }
+                      if (chatBubble) {
+                        chatbox.appendChild(chatBubble);
+                        chatbox.scrollTop = chatbox.scrollHeight; // Adjust scroll after each message
+                      }
+                    }, 500); // simulate typing for each response
+                  }, index * 1000); // stagger the display of each response
+                });
+              } else {
+                // Handle a single response
+                chatbox.appendChild(createChatLi(data.response, "incoming"));
+                chatbox.scrollTop = chatbox.scrollHeight; // Adjust scroll after single message
+              }
+            } else {
+              chatbox.appendChild(createChatLi("Received data, but format was unexpected.", "incoming"));
+              chatbox.scrollTop = chatbox.scrollHeight; // Adjust scroll after unexpected data
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            chatbox.appendChild(createChatLi("Sorry, there was an error processing your message.", "incoming"));
+            hideTypingAnimation();
+          });
+        }, 500);
+      }
+    }, 1500); // Consistent delay to simulate the typing effect initially
+  };  
+  
 const formatArticleMessage = (article) => {
   // Adjust this formatting as needed to match your front-end's expected structure
   return `
