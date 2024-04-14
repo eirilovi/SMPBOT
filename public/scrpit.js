@@ -81,50 +81,59 @@ function hideTypingAnimation() {
     }
 }
 
-  const handleCategoryAction = (category, action) => {
-    let endpoint = '';
-    const chatbox = document.querySelector(".chatbox");
+const handleCategoryAction = (category, action) => {
+  let endpoint = '';
+  const chatbox = document.querySelector(".chatbox");
+  let introMessage = ""; // Declare variable to hold the intro message based on the action
 
-    switch (action) {
-        case 'latest':
-            endpoint = `/Articles/${category}/latest`;
-            break;
-        case 'important':
-            endpoint = `/Articles/${category}/important`;
-            break;
-        case 'random':
-            endpoint = `/Articles/${category}/random`;
-            break;
-        default:
-            chatbox.appendChild(createChatLi("Unknown action.", "incoming"));
-            return;
-    }
+  switch (action) {
+    case 'latest':
+      endpoint = `/Articles/${category}/latest`;
+      introMessage = `Her er noen av de nyeste artiklene under kategorien: ${category} 😊`;
+      break;
+    case 'important':
+      endpoint = `/Articles/${category}/important`;
+      introMessage = `Her er noen av de viktigste artiklene under kategorien: ${category} 😊`;
+      break;
+    case 'random':
+      endpoint = `/Articles/${category}/random`;
+      introMessage = `Her er en tilfeldig artikkel under kategorien: ${category} 😊`;
+      break;
+    default:
+      chatbox.appendChild(createChatLi("Unknown action.", "incoming"));
+      return;
+  }
 
-    // Show typing animation
-    showTypingAnimation();
+  // Show typing animation
+  showTypingAnimation();
 
-    fetch(`http://localhost:3000${endpoint}`)
-        .then(response => response.json())
-        .then(articles => {
-            hideTypingAnimation(); // Hide typing animation once the data is loaded
+  fetch(`http://localhost:3000${endpoint}`)
+    .then(response => response.json())
+    .then(articles => {
+      hideTypingAnimation(); // Hide typing animation once the data is loaded
 
-            if (articles.length === 0) {
-                chatbox.appendChild(createChatLi("There are no articles available for this selection.", "incoming"));
-            } else {
-                const introMessage = "Her er noen artikler under kategorien " + category + " som du kanskje vil like:";
-                chatbox.appendChild(createChatLi(introMessage, "incoming"));
+      if (articles.length === 0) {
+        chatbox.appendChild(createChatLi("There are no articles available for this selection.", "incoming"));
+      } else {
+        chatbox.appendChild(createChatLi(introMessage, "incoming"));
 
-                // Start processing articles from the first one
-                processArticles(articles, 0, chatbox);
-            }
-            chatbox.scrollTop = chatbox.scrollHeight;
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            hideTypingAnimation();
-            chatbox.appendChild(createChatLi("Sorry, there was an error fetching the articles.", "incoming"));
-            chatbox.scrollTop = chatbox.scrollHeight;
-        });
+        // If the action is 'random', process only one article
+        if (action === 'random' && articles.length > 0) {
+          // Adjust here if the random endpoint structure is different or ensure it returns an array with one article
+          processArticles(articles, 0, chatbox);
+        } else {
+          // Start processing articles from the first one for 'latest' and 'important'
+          processArticles(articles, 0, chatbox);
+        }
+      }
+      chatbox.scrollTop = chatbox.scrollHeight;
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      hideTypingAnimation();
+      chatbox.appendChild(createChatLi("Sorry, there was an error fetching the articles.", "incoming"));
+      chatbox.scrollTop = chatbox.scrollHeight;
+    });
 };
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -173,18 +182,18 @@ document.addEventListener('DOMContentLoaded', function () {
   
 
   function fetchSimilarArticles(articleId) {
+    const chatbox = document.querySelector(".chatbox");
+    
+    // Start by showing the typing animation immediately when the button is clicked, before initiating the fetch.
+    showTypingAnimation();
+
     fetch(`http://localhost:3000/similarArticles/${articleId}`)
         .then(response => response.json())
         .then(similarArticles => {
-            const chatbox = document.querySelector(".chatbox");
-
-            // Start by showing the typing animation
-            showTypingAnimation();
-
-            // Introduce a small delay before showing intro message
+            // Use setTimeout to introduce a controlled delay for showing results after fetching
             setTimeout(() => {
                 hideTypingAnimation();
-                const introMessage = "Her er noen lignende artikler du kanskje vil like:";
+                const introMessage = "Her er noen lignende artikler du kanskje vil like: 😊";
                 const introLi = createChatLi(introMessage, "incoming");
                 chatbox.appendChild(introLi);
 
@@ -196,7 +205,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     chatbox.appendChild(noArticlesLi);
                     chatbox.scrollTop = chatbox.scrollHeight;
                 }
-            }, 1500); // adjust delay as needed
+            }, 1500); // This delay is to simulate the typing duration, not to compensate for fetch time
         })
         .catch(error => {
             console.error('Error fetching similar articles:', error);
@@ -206,6 +215,39 @@ document.addEventListener('DOMContentLoaded', function () {
             chatbox.appendChild(errorLi);
             chatbox.scrollTop = chatbox.scrollHeight;
         });
+}
+
+function fetchContextArticles(articleId) {
+  const chatbox = document.querySelector(".chatbox");
+  showTypingAnimation();  // Start typing animation immediately
+
+  fetch(`http://localhost:3000/articlesInSeries/${articleId}`)
+    .then(response => response.json())
+    .then(contextArticles => {
+      setTimeout(() => {
+        hideTypingAnimation();  // Hide typing animation after fetching data
+        const introMessage = "Disse artiklene er fra samme serie, og kan hjelpe deg med å få overblikk over saken:😊";
+        const introLi = createChatLi(introMessage, "incoming");
+        chatbox.appendChild(introLi);
+
+        if (contextArticles && contextArticles.length > 0) {
+          processArticles(contextArticles, 0, chatbox);  // Assuming you have a function to process and display articles
+        } else {
+          const noArticlesMessage = "Ingen andre artikler i denne serien.";
+          const noArticlesLi = createChatLi(noArticlesMessage, "incoming");
+          chatbox.appendChild(noArticlesLi);
+          chatbox.scrollTop = chatbox.scrollHeight;
+        }
+      }, 1500);  // Delay to simulate the typing duration
+    })
+    .catch(error => {
+      console.error('Error fetching context articles:', error);
+      hideTypingAnimation();
+      const errorMessage = "Beklager, det oppstod en feil ved henting av artikler fra serien.";
+      const errorLi = createChatLi(errorMessage, "incoming");
+      chatbox.appendChild(errorLi);
+      chatbox.scrollTop = chatbox.scrollHeight;
+    });
 }
 
   //Function to initialize Chatbot
@@ -223,7 +265,7 @@ document.addEventListener('DOMContentLoaded', function () {
     setTimeout(() => {
       hideTypingAnimation();
       const greetingMessage = articleId
-        ? `Velkommen til artikkel ${articleId}! Hvordan kan jeg hjelpe deg?`
+        ? `Velkommen til artikkelen! Hvordan kan jeg hjelpe deg?`
         : "Hei! Jeg er Sunnmørspostens Chatbot!";
   
       chatbox.appendChild(createChatLi(greetingMessage, "incoming"));
@@ -307,7 +349,7 @@ const createFaqButtons = () => {
     const articleButtons = [
       { text: "Oppsummer artikkel", pattern: "summarize article" },
       { text: "Lignende artikler", pattern: "similar articles", id: articleId },
-      { text: "Placeholder 3", pattern: "placeholder3" }
+      { text: "Kontekst til artikkel", pattern: "context", id: articleId  }
     ];
 
     const buttonsContainer = document.createElement('div');
@@ -322,8 +364,11 @@ const createFaqButtons = () => {
       button.onclick = () => {runArticle(articleId)}
         //button.setAttribute('data-article-id', articleId); // Set the article ID here
       }
-      if (btn.pattern === "similar articles") {
+      else if (btn.pattern === "similar articles") {
         button.onclick = () => {fetchSimilarArticles(btn.id)};
+      }
+      else if (btn.pattern === "context") {
+        button.onclick = () => {fetchContextArticles(btn.id)};
       }
       button.setAttribute('data-pattern', btn.pattern);
       button.textContent = btn.text;
@@ -359,7 +404,7 @@ const createFaqButtons = () => {
                 showTypingAnimation(); // Show typing animation on category button click
                 selectedCategory = this.getAttribute('data-category');
                 setTimeout(() => { // Simulate processing time
-                  chatbox.appendChild(createChatLi(`Du valgte kategori: ${selectedCategory}. Hva ønsker du jeg skal gjøre?`, "incoming"));
+                  chatbox.appendChild(createChatLi(`Du valgte kategori: ${selectedCategory}. Hva ønsker du jeg skal gjøre? 😊`, "incoming"));
   
                   const optionsContainer = document.createElement('div');
                   optionsContainer.classList.add('faq-buttons-container');
@@ -441,7 +486,7 @@ const createFaqButtons = () => {
             .then(response => response.json())
             .then(articles => {
               hideTypingAnimation();
-              const introMessage = "Her er noen artikler for ungdom du kanskje vil like:";
+              const introMessage = "Her er noen artikler for ungdom du kanskje vil like: 😊";
               chatbox.appendChild(createChatLi(introMessage, "incoming"));
               chatbox.scrollTop = chatbox.scrollHeight; // Ensure scroll adjustment after the intro
               processArticles(articles, 0, chatbox);
