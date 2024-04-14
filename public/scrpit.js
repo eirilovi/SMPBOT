@@ -226,7 +226,7 @@ function fetchContextArticles(articleId) {
     .then(contextArticles => {
       setTimeout(() => {
         hideTypingAnimation();  // Hide typing animation after fetching data
-        const introMessage = "Her er artikler fra samme serie:";
+        const introMessage = "Disse artiklene er fra samme serie, og kan hjelpe deg med å få overblikk over saken:😊";
         const introLi = createChatLi(introMessage, "incoming");
         chatbox.appendChild(introLi);
 
@@ -265,7 +265,7 @@ function fetchContextArticles(articleId) {
     setTimeout(() => {
       hideTypingAnimation();
       const greetingMessage = articleId
-        ? `Velkommen til artikkel ${articleId}! Hvordan kan jeg hjelpe deg?`
+        ? `Velkommen til artikkelen! Hvordan kan jeg hjelpe deg?`
         : "Hei! Jeg er Sunnmørspostens Chatbot!";
   
       chatbox.appendChild(createChatLi(greetingMessage, "incoming"));

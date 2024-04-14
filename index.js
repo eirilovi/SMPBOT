@@ -62,7 +62,7 @@ app.get('/relevantArticles', async (req, res) => {
     if (recentArticles && recentArticles.length > 0) {
         const topArticles = recentArticles
             .sort((a, b) => b.viktighetsgrad - a.viktighetsgrad) // Sort by 'viktighetsgrad' descending
-            .slice(0, 5); // Take the top 5
+            .slice(0, 3); // Take the top 3
 
         // Return articles as JSON
         res.json({
