@@ -26,7 +26,7 @@ app.use(express.static("public")); // Serve static files
 //const ArticlesData = JSON.parse(fs.readFileSync(path.join(__dirname, 'sample_Articles.json'), 'utf8'));
 //const categories = Object.keys(ArticlesData);
 let chatHistory = [
-  { role: 'system', content: 'You are a friendly chatbot helper. You will answer the users question and then recommend that the user should utilize the buttons above, as they are very helpful. you will only communicate in "new norwegian, nynorsk"'}
+  { role: 'system', content: 'You are a friendly chatbot helper. You will answer the users question and then recommend that the user should utilize the buttons above, as they are very helpful. you will only communicate in "bokmål", norwegian'}
 ];; // Store the chat history
 
 // Function to check FAQs
@@ -38,67 +38,65 @@ async function checkSubscriptionFAQs(userInput) {
 
   if (subscribeRegex.test(userInput)) {
     return 'Om du ønsker å bli abonnent, følg denne lenken: <a href="https://www.smp.no/dakapo/productpage/SPO/?source=topheader_A" target="_blank">Trykk her</a>';
-  } else if (plansRegex.test(userInput)) {
-    const ArticlesList = await fetchRelevantArticles(); // Fetch relevant Articles
-    return ArticlesList;
-  } else if (cancelSubscriptionRegex.test(userInput)) {
-    const youthArticlesList = await fetchYouthArticles(); // Fetch Articles for "Ungdom"
-    return youthArticlesList;
   } else if (accessContentRegex.test(userInput)) {
     return 'Du kan kontakte oss her: <a href="https://www.smp.no/nyheter/i/oWbOOB/kontakt-oss" target="_blank">Trykk her</a>';
   }
   return ""; // Return an empty string if no FAQ matches
 }
 
-async function fetchRelevantArticles() {
+app.get('/relevantArticles', async (req, res) => {
   try {
-      const { data, error } = await supabase
-          .from('Articles')
-          .select('title, url') // Select both title and url from your Articles table
-          .limit(5);
+    // Fetch the top 20 most recent articles
+    const { data: recentArticles, error: recentError } = await supabase
+        .from('Articles')
+        .select('id, title, url, viktighetsgrad')
+        .order('publication_date', { ascending: false })
+        .limit(20);
 
-      if (error) {
-          throw error;
-      }
+    if (recentError) {
+        console.error('Error fetching Articles:', recentError);
+        return res.status(500).send('Error fetching Articles');
+    }
 
-      if (data && data.length > 0) {
-          // Create hyperlinks for each article
-          return data.map(article => `<a href="${article.url}" target="_blank">${article.title}</a>`).join('<br><br>');
-      } else {
-          return "Det er for tiden ingen relevante artikler å vise.";
-      }
+    // Filter to the top 5 based on importance
+    if (recentArticles && recentArticles.length > 0) {
+        const topArticles = recentArticles
+            .sort((a, b) => b.viktighetsgrad - a.viktighetsgrad) // Sort by 'viktighetsgrad' descending
+            .slice(0, 5); // Take the top 5
+
+        // Return articles as JSON
+        res.json({
+            message: "Hei dette er de siste og mest relevante artiklene for i dag:",
+            articles: topArticles
+        });
+    } else {
+        res.status(404).send("Det er for tiden ingen relevante artikler å vise.");
+    }
   } catch (error) {
-      console.error('Error fetching Articles:', error);
-      return "Det oppsto en feil under henting av artikler.";
+    console.error('Error fetching relevant Articles:', error);
+    res.status(500).send("Det oppsto en feil under henting av artikler.");
   }
-}
+});
 
+// Endpoint to get Articles specifically tagged with "Ungdom"
+app.get('/articlesUngdom', async (req, res) => {
+  const tag = 'Ungdom'; // Hardcoded tag value
+  const { data, error } = await supabase
+    .from('Articles')
+    .select('*')
+    .ilike('tags', `%${tag}%`);
 
-async function fetchYouthArticles() {
-  try {
-      const { data, error } = await supabase
-          .from('Articles')
-          .select('*')
-          .ilike('tags', '%Ungdom%')
-          .limit(5);
-
-      if (error) {
-          throw error;
-      }
-
-      if (data && data.length > 0) {
-          // Add a header before listing articles
-          let articlesList = "Her er noen artikler for Ungdom:";
-          articlesList += "<br><br>" + data.map(article => `<a href="${article.url}" target="_blank">${article.title}</a>`).join('<br><br>');
-          return articlesList;
-      } else {
-          return "Det er for tiden ingen artikler for Ungdom å vise.";
-      }
-  } catch (error) {
-      console.error('Error fetching youth Articles:', error);
-      return "Det oppsto en feil under henting av artikler for Ungdom.";
+  if (error) {
+    console.error('Error fetching Articles tagged with Ungdom:', error);
+    return res.status(500).send('Error fetching Articles');
   }
-}
+
+  if (data.length === 0) {
+    return res.status(404).send('No articles found with the tag Ungdom');
+  }
+
+  res.json(data);
+});
 
 
 app.get('/categories', async (req, res) => {
