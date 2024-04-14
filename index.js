@@ -86,16 +86,29 @@ async function fetchYouthArticles() {
           throw error;
       }
 
+      let messages = []; // An array to hold our messages
+      
       if (data && data.length > 0) {
-        return data.map(article => `<a href="${article.url}" target="_blank">${article.title}</a>`).join('<br><br>');
+        // First message: the introduction
+        messages.push({ type: 'text', content: "Her er noen artikler for Ungdom:" });
+
+        // Second message: the list of articles
+        const articlesList = data.map(article => 
+          `<a href="${article.url}" target="_blank">${article.title}</a>`).join('<br>');
+        messages.push({ type: 'text', content: articlesList });
       } else {
-          return "Det er for tiden ingen artikler for Ungdom å vise.";
+        // If no articles found, only one message is needed
+        messages.push({ type: 'text', content: "Det er for tiden ingen artikler for Ungdom å vise." });
       }
+
+      return messages;
   } catch (error) {
       console.error('Error fetching youth Articles:', error);
-      return "Det oppsto en feil under henting av artikler for Ungdom.";
+      return [{ type: 'text', content: "Det oppsto en feil under henting av artikler for Ungdom." }];
   }
 }
+
+
 
 app.get('/categories', async (req, res) => {
   const { data, error } = await supabase

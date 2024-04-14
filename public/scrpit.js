@@ -226,7 +226,7 @@ document.addEventListener('DOMContentLoaded', function () {
     setTimeout(() => {
       hideTypingAnimation();
       const greetingMessage = articleId
-        ? `Velkommen til artikkel ${articleId}! Korleis kan eg hjelpa deg?`
+        ? `Velkommen til artikkel ${articleId}! Hvordan kan jeg hjelpe deg?`
         : "Hei! Jeg er Sunnmørspostens Chatbot!";
   
       chatbox.appendChild(createChatLi(greetingMessage, "incoming"));
@@ -252,8 +252,8 @@ document.addEventListener('DOMContentLoaded', function () {
         setTimeout(() => {
           hideTypingAnimation();
           const clickButtonMessage = articleId
-            ? "Trykk på en av artikkel-knappene, eller spør et spørsmål i chatten. 😊"
-            : "Trykk på en av knappene, eller spør et spørsmål i chatten. 😊";
+            ? "Trykk på en av artikkel-knappene, eller spør et spørsmål i chatten.😊"
+            : "Trykk på en av knappene, eller spør et spørsmål i chatten.😊";
   
           chatbox.appendChild(createChatLi(clickButtonMessage, "incoming"));
           chatbox.scrollTop = chatbox.scrollHeight;
@@ -303,12 +303,6 @@ const createFaqButtons = () => {
     // Append FAQ buttons to the chatbox
     chatbox.appendChild(createChatLi(buttonsContainer, "incoming"));
     chatbox.scrollTop = chatbox.scrollHeight;
-  
-    // Add a message after the FAQ buttons
-    //const clickButtonMessage = "Trykk på en av knappene, eller spør et spørsmål i chatten. :D";
-    //chatbox.appendChild(createChatLi(clickButtonMessage, "incoming"));
-    //chatbox.scrollTop = chatbox.scrollHeight;
-  
 };
 
   // Function to create article-specific buttons
