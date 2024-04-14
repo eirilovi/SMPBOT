@@ -104,6 +104,9 @@ body {
   max-height: calc(100vh - 200px); /* Maximum height of chatbox to fit the viewport */
   overflow-y: auto; /* Enable vertical scrollbar when content exceeds the height */
   padding: 30px 20px 10px;
+  word-break: normal;  /* This will break the URL if it's too long to fit */
+  overflow-wrap: break-word; /* Ensures that long words can be broken and wrapped onto the next line */
+  white-space: normal; /* Allows the text to wrap as needed */
 }
 
 .chatbot .chat {
