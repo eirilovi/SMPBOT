@@ -60,49 +60,73 @@ function hideTypingAnimation() {
       return chatLi;
   };
 
+  function processArticles(articles, index, chatbox) {
+    if (index < articles.length) {
+        showTypingAnimation();
+
+        // Introduce a small delay for visual effect
+        setTimeout(() => {
+            hideTypingAnimation();
+            const article = articles[index];
+            const articleInfo = `${article.title} <a href="${article.url}" target="_blank">${article.url}</a>`;
+            const articleLi = createChatLi(articleInfo, "incoming");
+            chatbox.appendChild(articleLi);
+
+            // Process the next article
+            processArticles(articles, index + 1, chatbox);
+        }, 1500); // adjust delay as needed
+    } else {
+        // All articles processed
+        chatbox.scrollTop = chatbox.scrollHeight;
+    }
+}
+
   const handleCategoryAction = (category, action) => {
     let endpoint = '';
-    const chatbox = document.querySelector(".chatbox")
+    const chatbox = document.querySelector(".chatbox");
+
     switch (action) {
-      case 'latest':
-        endpoint = `/Articles/${category}/latest`;
-        break;
-      case 'important':
-        endpoint = `/Articles/${category}/important`;
-        break;
-      case 'random':
-        endpoint = `/Articles/${category}/random`;
-        break;
-      default:
-        chatbox.appendChild(createChatLi("Unknown action.", "incoming"));
-        return;
+        case 'latest':
+            endpoint = `/Articles/${category}/latest`;
+            break;
+        case 'important':
+            endpoint = `/Articles/${category}/important`;
+            break;
+        case 'random':
+            endpoint = `/Articles/${category}/random`;
+            break;
+        default:
+            chatbox.appendChild(createChatLi("Unknown action.", "incoming"));
+            return;
     }
-  
+
+    // Show typing animation
+    showTypingAnimation();
+
     fetch(`http://localhost:3000${endpoint}`)
-      .then(response => response.json())
-      .then(articles => {
-        if (articles.length === 0) {
-          chatbox.appendChild(createChatLi("There are no articles available for this selection.", "incoming"));
-        } else {
-          // Use the map function to iterate over articles and create anchor elements
-          const articlesHtml = articles.map(article => {
-            const anchorElement = document.createElement('a');
-            anchorElement.href = article.url;
-            anchorElement.textContent = article.title;
-            anchorElement.target = "_blank";
-            return anchorElement.outerHTML; // Get the HTML string of the anchor element
-          }).join('<br><br>'); // Join them with a line break
-          
-          // Create a chat message with the articles HTML
-          chatbox.appendChild(createChatLi(articlesHtml, "incoming"));
-        }
-        chatbox.scrollTop = chatbox.scrollHeight;
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        chatbox.appendChild(createChatLi("Sorry, there was an error fetching the articles.", "incoming"));
-      });
-  };
+        .then(response => response.json())
+        .then(articles => {
+            hideTypingAnimation(); // Hide typing animation once the data is loaded
+
+            if (articles.length === 0) {
+                chatbox.appendChild(createChatLi("There are no articles available for this selection.", "incoming"));
+            } else {
+                const introMessage = "Her er noen artikler under kategorien " + category + " som du kanskje vil like:";
+                chatbox.appendChild(createChatLi(introMessage, "incoming"));
+
+                // Start processing articles from the first one
+                processArticles(articles, 0, chatbox);
+            }
+            chatbox.scrollTop = chatbox.scrollHeight;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            hideTypingAnimation();
+            chatbox.appendChild(createChatLi("Sorry, there was an error fetching the articles.", "incoming"));
+            chatbox.scrollTop = chatbox.scrollHeight;
+        });
+};
+
 document.addEventListener('DOMContentLoaded', function () {
   const chatbotToggler = document.querySelector(".chatbot-toggler");
   const chatbot = document.querySelector(".chatbot");
@@ -184,26 +208,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 }
 
-function processArticles(articles, index, chatbox) {
-    if (index < articles.length) {
-        showTypingAnimation();
 
-        // Introduce a small delay for visual effect
-        setTimeout(() => {
-            hideTypingAnimation();
-            const article = articles[index];
-            const articleInfo = `${article.title} <a href="${article.url}" target="_blank">${article.url}</a>`;
-            const articleLi = createChatLi(articleInfo, "incoming");
-            chatbox.appendChild(articleLi);
-
-            // Process the next article
-            processArticles(articles, index + 1, chatbox);
-        }, 1500); // adjust delay as needed
-    } else {
-        // All articles processed
-        chatbox.scrollTop = chatbox.scrollHeight;
-    }
-}
 
 
   //Function to initialize Chatbot

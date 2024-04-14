@@ -373,27 +373,7 @@ app.get('/summarizeArticle/:id', async (req, res) => {
   // Prepare prompt for GPT-3-turbo
   const prompt = 
   
-  `You are a Norwegian journalist who will provide a concise summary of the following news article, adhering to these strict guidelines. You understand, read and write both in Norwegian bokmål and norwegian nynorsk. The distinction between the two is of high importance:
-
-  Output:
-  
-  Use Norwegian language and detect if the article is written in norwegian nynorsk or norwegian bokmål. Do not write in clear text what language the article is written in, but use the language detected to write your response.
-  
-  If the article is written in norwegian nynorsk, write the summary using norwegian nynorsk, and if the article is written in norwegian bokmål, write the summary using norwegian bokmål. The distinction between nynorsk and bokmål is of high importance.
-  
-  Use Markdown-formatted bullet points for structure.
-  
-  Limit to 3-5 bullet points.
-  
-  Limit each bullet point to no more than 10-15 words.
-  
-  Content:
-  
-  Address the key questions: Who, What, Where, When, and importantly, Why is this story important to know about?
-  
-  Ensure the language is clear and easily comprehensible, suitable for readers aged 20-30.
-  
-  Maintain journalistic integrity and avoid factual errors or hallucinations. \n\n${article.content}`;
+  `Write an ULTRA-SHORT summary in norwegian about this article in THREE bullet points that are spaced out with paragraphs: \n\n${article.content}`;
 
   try {
     const openAIResponse = await openai.createChatCompletion({
