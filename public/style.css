@@ -74,20 +74,32 @@ body {
   font-size: 1.4rem;
 }
 
+
 .article-message {
-  /* background-color: #f9f9f9;  Lighter background for better readability */
-  padding-top: 15px;
-  padding-bottom: 15px;
-  margin: 5px 0;
-  font-family: 'Poppins', sans-serif; /* Use Poppins for a cleaner look */
-  color: #084c9c; /* Darker text for better contrast */
+  background-color: #c2c2c2;
+  padding: 0px;
+  margin: 0px 0;
+  font-family: 'Poppins', sans-serif;
+  border-radius: 0px;
 }
+
+.article-message .author, .article-message .summary {
+  background-color: #c2c2c2 !important;
+  color: black !important;
+  line-height: normal !important;
+}
+
 
 .article-message a {
-  display: inline-block;
-  margin-top: 5px;
+  margin-top: 0px;
+  color: #084c9c;
+  text-decoration: none;
+  transition: color 0.3s ease;
 }
 
+.article-message a:hover {
+  color: #031f3c; /* Darker color when hovered */
+}
 
 .chatbot header span {
   position: absolute;
@@ -286,6 +298,38 @@ body {
 
 .option-button:hover {
   background-color: #062e5b;
+}
+
+.confirm-button {
+  margin: 3px 5px; /* Provide spacing between buttons and reduce lateral margins */
+  width: 80px; /* Fixed width suitable for Yes/No text */
+  padding: 8px 15px; /* Slightly less padding */
+  font-size: 0.9rem; /* Consistent font size with FAQ buttons */
+  background-color: #084c9c; /* A lighter blue to stand out from FAQ buttons */
+  color: white; /* Text color */
+  border: none;
+  border-radius: 4px; /* Rounded corners */
+  cursor: pointer;
+  transition: background-color 0.3s;
+  display: inline-flex; /* Inline-flex to allow side-by-side layout */
+  justify-content: center; /* Center text horizontally */
+  align-items: center; /* Center text vertically */
+}
+
+.confirm-message-container {
+  display: flex;
+  flex-direction: row;
+}
+
+.confirm-button {
+  margin-top: 5px; /* Add space between the message and the buttons */
+  width: 45%; /* Full width within the container */
+  /* ... other styles ... */
+}
+
+
+.confirm-button:hover {
+  background-color: #062e5b; /* Blue color on hover, similar to FAQ button */
 }
 
 .faq-button::after,

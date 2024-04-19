@@ -26,7 +26,7 @@ app.use(express.static("public")); // Serve static files
 let chatHistory = [
   { 
     role: 'system', 
-    content: `You will scan the users input and find a keyword from the "recognized keywords" list that matches most with the users input. You will then say: "Jeg tror jeg har svaret på spørsmålet ditt! 😊 Skriv heller: "(keyword)"". If no words match at all, continue as a friendly chatbot helper. Only communicate in "bokmål" Norwegian.`
+    content: `You are a friendly chatbot helper that answers questions with a smile😊. Write very short messages. Only communicate in "bokmål" Norwegian.`
   }
 ]; // Store the chat history
 
@@ -177,7 +177,7 @@ app.get('/relevantArticles', async (req, res) => {
     // Fetch the top 20 most recent articles
     const { data: recentArticles, error: recentError } = await supabase
         .from('Articles')
-        .select('id, title, url, viktighetsgrad')
+        .select('*')
         .order('publication_date', { ascending: false })
         .limit(20);
 
@@ -302,20 +302,11 @@ app.get('/Articles/:category', async (req, res) => {
   res.json(data);
 });
 
-
-// This function will send JSON responses with titles and URLs
-const sendArticlesAsJson = (res, data) => {
-  const articlesWithLinks = data.map(article => {
-    return { title: article.title, url: article.url };
-  });
-  res.json(articlesWithLinks); // Send a JSON response
-};
-
 app.get('/Articles/:category/latest', async (req, res) => {
   const { category } = req.params;
   const { data, error } = await supabase
     .from('Articles')
-    .select('title, url')
+    .select('*')
     .eq('category', category)
     .order('publication_date', { ascending: false })
     .limit(3);
@@ -325,7 +316,11 @@ app.get('/Articles/:category/latest', async (req, res) => {
     return res.status(500).send('Error fetching latest Articles');
   }
 
-  sendArticlesAsJson(res, data);
+  const articlesAsJson = data.map(article => {
+    return { title: article.title, url: article.url, author: article.author, content: article.content};
+  });
+
+  res.json(articlesAsJson);
 });
 
 
@@ -333,7 +328,7 @@ app.get('/Articles/:category/important', async (req, res) => {
   const { category } = req.params;
   const { data, error } = await supabase
     .from('Articles')
-    .select('title, url')
+    .select('*')
     .eq('category', category)
     .order('viktighetsgrad', { ascending: false })
     .limit(3);
@@ -344,7 +339,7 @@ app.get('/Articles/:category/important', async (req, res) => {
   }
 
   const articlesAsJson = data.map(article => {
-    return { title: article.title, url: article.url };
+    return { title: article.title, url: article.url, author: article.author, content: article.content};
   });
 
   res.json(articlesAsJson);
@@ -363,7 +358,7 @@ app.get('/Articles/:category/random', async (req, res) => {
     }
 
     const articlesAsJson = data.map(article => {
-      return { title: article.title, url: article.url };
+      return { title: article.title, url: article.url, author: article.author, content: article.content};
     });
 
     res.json(articlesAsJson);
@@ -420,70 +415,114 @@ const searchArticlesInDatabase = async (keywords) => {
 
 app.post('/ask', async (req, res) => {
   const userInput = req.body.message;
-  
-  // Update chat history with user's message
-  chatHistory.push({ role: 'user', content: userInput });
+  chatHistory.push({ role: 'user', content: userInput }); // Log user input to chat history
+
+  let response = [];
 
   // First, check if the user is asking for something that can be answered by FAQs
   let faqResponse = await checkSubscriptionFAQs(userInput);
-  
-  let response = [];
-
   if (faqResponse) {
-    // FAQ response found, append it to the response array and update chat history
-    response.push({ type: 'text', content: faqResponse });
-    chatHistory.push({ role: 'system', content: faqResponse });
+      // FAQ response found, append it to the response array and update chat history
+      response.push({ type: 'text', content: faqResponse });
+      chatHistory.push({ role: 'system', content: faqResponse });
   } else {
-    // No FAQ match, extract keywords from the user input
-    const keywords = extractKeywords(userInput);
-    
-    if (keywords.length > 0) {
-      const articles = await searchArticlesInDatabase(keywords);
-      
-      if (articles.length > 0) {
-        // Found relevant articles, prepare each article as an individual response
-        articles.forEach(article => {
-          response.push({
-            type: 'article',
-            title: article.title,
-            author: article.author,
-            summary: article.content.substring(0, 150) + '...',
-            url: article.url // Assuming you have a URL for the article
-          });
-          chatHistory.push({ role: 'system', content: article.title });
-        });
-      } else {
-        // No articles found, ask OpenAI
-        await askOpenAIForResponse(userInput);
+      // Check for tags in the message
+      const tags = await findTagsInMessage(userInput);
+      if (tags.length > 0) {
+          // Fetch articles for each found tag and prepare response
+          const articles = [];
+          for (let tag of tags) {
+              const taggedArticles = await fetchArticlesByTag(tag);
+              articles.push(...taggedArticles.map(article => ({
+                  type: 'article',
+                  title: article.title,
+                  content: article.content,
+                  url: article.url,
+                  author: article.author
+              })));
+          }
+
+          if (articles.length > 0) {
+              response.push({
+                  type: 'confirm',
+                  content: "Jeg fant noen artikler med tags som matcher meldingen din. Ønsker du at jeg foreslår dem?😊",
+                  articles: articles
+              });
+          }
       }
-    } else {
-      // No keywords found, ask OpenAI
-      await askOpenAIForResponse(userInput);
-    }
+
+      // If no tags found or no specific content matched, proceed with keyword extraction and article search or OpenAI response
+      if (response.length === 0) {
+          // Extract keywords from the user input
+          const keywords = extractKeywords(userInput);
+          if (keywords.length > 0) {
+              const articles = await searchArticlesInDatabase(keywords);
+              if (articles.length > 0) {
+                  // Articles found, prepare article type response
+                  articles.forEach(article => {
+                      response.push({
+                          type: 'article',
+                          title: article.title,
+                          content: article.content,
+                          url: article.url,
+                          author: article.author
+                      });
+                      chatHistory.push({ role: 'system', content: article.title }); // Log article titles to chat history
+                  });
+              }
+          }
+
+          // If no articles or keywords were relevant, fallback to OpenAI's GPT model
+          if (response.length === 0) {
+              await askOpenAIForResponse(userInput);
+          }
+      }
   }
 
   // Send the response array back
   res.json({ response });
 
-  async function askOpenAIForResponse(userInput) {
-    try {
-      const openAIResponse = await openai.createChatCompletion({
-        model: 'gpt-3.5-turbo',
-        messages: chatHistory,
-        max_tokens: 300,
-      });
-      let responseText = openAIResponse.data.choices[0].message.content.trim();
-      // Prepare OpenAI's response to send back
-      response.push({ type: 'text', content: responseText });
-      chatHistory.push({ role: 'system', content: responseText });
-    } catch (error) {
-      console.error("Error with OpenAI:", error);
-      let errorMessage = "Sorry, I encountered an error processing your request.";
-      response.push({ type: 'text', content: errorMessage });
-      chatHistory.push({ role: 'system', content: errorMessage });
-    }
+
+async function askOpenAIForResponse(userInput) {
+  try {
+    const openAIResponse = await openai.createChatCompletion({
+      model: 'gpt-3.5-turbo',
+      messages: chatHistory,
+      max_tokens: 300,
+    });
+    let responseText = openAIResponse.data.choices[0].message.content.trim();
+    // Prepare OpenAI's response to send back
+    response.push({ type: 'text', content: responseText });
+    chatHistory.push({ role: 'system', content: responseText });
+  } catch (error) {
+    console.error("Error with OpenAI:", error);
+    let errorMessage = "Sorry, I encountered an error processing your request.";
+    response.push({ type: 'text', content: errorMessage });
+    chatHistory.push({ role: 'system', content: errorMessage });
   }
-});
+}});
+
+async function findTagsInMessage(userInput) {
+  const allTags = await getAllTags(); // Fetch all tags from your database
+  const inputLower = userInput.toLowerCase();
+  const foundTags = allTags.filter(tag => inputLower.includes(tag));
+  return foundTags;
+}
+
+async function getAllTags() {
+  let { data: tags, error } = await supabase
+      .from('Articles')
+      .select('tags');
+  if (error) {
+      console.error('Error fetching tags:', error);
+      return [];
+  }
+  const allTags = new Set();
+  tags.forEach(article => {
+      article.tags.split(',').forEach(tag => allTags.add(tag.trim().toLowerCase()));
+  });
+  return Array.from(allTags);
+}
 
 // Endpoint to summarize an article
 app.get('/summarizeArticle/:id', async (req, res) => {
@@ -527,7 +566,7 @@ app.get('/articlesInSeries/:id', async (req, res) => {
     // Fetch the series information for the current article
     const { data: articleData, error: articleError } = await supabase
       .from('Articles')
-      .select('series')
+      .select('*')
       .eq('id', id)
       .single();
 
@@ -541,7 +580,7 @@ app.get('/articlesInSeries/:id', async (req, res) => {
     // Fetch all articles from the same series
     const { data: seriesArticles, error: seriesError } = await supabase
       .from('Articles')
-      .select('id, title, url')
+      .select('*')
       .in('series', seriesIds)
       .not('id', 'eq', id); // Optionally exclude the current article from the list
 
@@ -563,7 +602,7 @@ app.get('/similarArticles/:id', async (req, res) => {
     // Fetch the tags for the current article
     const { data: currentArticle, error: currentArticleError } = await supabase
       .from('Articles')
-      .select('tags')
+      .select('*')
       .eq('id', id)
       .single();
 
@@ -579,7 +618,7 @@ app.get('/similarArticles/:id', async (req, res) => {
     for (let tag of tags) {
       const { data: articlesByTag, error: tagError } = await supabase
         .from('Articles')
-        .select('id, title, url')
+        .select('*')
         .ilike('tags', `%${tag}%`) // Use ILIKE for case-insensitive matching
         .not('id', 'eq', id); // Exclude the current article
 
@@ -609,6 +648,22 @@ app.get('/similarArticles/:id', async (req, res) => {
     res.status(500).send('Error fetching similar articles');
   }
 });
+
+async function fetchArticlesByTag(tag) {
+  let { data: articles, error } = await supabase
+      .from('Articles')
+      .select('*')
+      .ilike('tags', `%${tag}%`);  // Use ILIKE for case-insensitive matching
+
+  if (error) {
+      console.error('Error fetching articles by tags:', error);
+      return [];
+  }
+
+  return articles;
+}
+
+
 
 app.get("", (req, res) => {
   res.sendFile(path.join(__dirname, '/index.html'));

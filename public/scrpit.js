@@ -68,8 +68,9 @@ function hideTypingAnimation() {
         setTimeout(() => {
             hideTypingAnimation();
             const article = articles[index];
-            const articleInfo = `${article.title} <a href="${article.url}" target="_blank">${article.url}</a>`;
-            const articleLi = createChatLi(articleInfo, "incoming");
+            console.log("Article at index", index, article); // Log the article to check its properties
+            const formattedArticle = formatArticleMessage(article); // Format the article
+            const articleLi = createChatLi(formattedArticle, "incoming"); // Use formatted article
             chatbox.appendChild(articleLi);
 
             // Process the next article
@@ -80,6 +81,35 @@ function hideTypingAnimation() {
         chatbox.scrollTop = chatbox.scrollHeight;
     }
 }
+
+
+const formatArticleMessage = (article) => {
+    // Determine how many characters you want to show in the summary
+    const summaryCharacterLimit = 100;
+    let truncatedSummary = article.content || ''; // Handle undefined summary
+  
+    // Truncate the summary if it's longer than the summaryCharacterLimit
+    if (truncatedSummary.length > summaryCharacterLimit) {
+        truncatedSummary = truncatedSummary.substring(0, summaryCharacterLimit) + '...';
+    }
+
+    console.log("Truncated summary:", truncatedSummary); // Log truncated summary
+
+    // Adjust this formatting as needed to match your front-end's expected structure
+    return `
+    <div class="article-message">
+        <strong>${article.title}</strong><br>
+        <div class="article-details">
+            <span class="author">${article.author}</span><br>
+            <br><span class="summary">${truncatedSummary}</span><br> <!-- Use truncated summary -->
+            <a href="${article.url}" target="_blank">Les her</a>
+        </div>
+    </div>
+    `;
+}
+
+
+
 
 const handleCategoryAction = (category, action) => {
   let endpoint = '';
@@ -521,7 +551,6 @@ const createFaqButtons = () => {
             });
         }, 500);
       } else {
-        // Determine the endpoint based on whether the message is a category or general question
         let endpoint;
         if (window.chatCategories && window.chatCategories.map(c => c.toLowerCase()).includes(userMessageLower)) {
           selectedCategory = window.chatCategories.find(c => c.toLowerCase() === userMessageLower);
@@ -554,8 +583,41 @@ const createFaqButtons = () => {
                       if (item.type === 'text') {
                         chatBubble = createChatLi(item.content, "incoming");
                       } else if (item.type === 'article') {
-                        const articleMessage = formatArticleMessage(item);
+                        console.log("Article data received:", item); // This will show what data is being passed
+                        const articleMessage = formatArticleMessage({
+                          title: item.title,
+                          author: item.author,
+                          summary: item.summary,
+                          url: item.url
+                        });
                         chatBubble = createChatLi(articleMessage, "incoming");
+                      } else if (item.type === 'confirm') {
+                        const confirmMessageText = createChatLi(item.content, "incoming");
+                        chatbox.appendChild(confirmMessageText);
+                      
+                        const buttonContainer = document.createElement('div');
+                        buttonContainer.classList.add('confirm-message-container');
+                      
+                        const yesButton = document.createElement('button');
+                        yesButton.textContent = "Ja";
+                        yesButton.classList.add('confirm-button');
+                        yesButton.onclick = () => {
+                          processArticles(item.articles, 0, chatbox);
+                        };
+  
+                        const noButton = document.createElement('button');
+                        noButton.textContent = "Nei";
+                        noButton.classList.add('confirm-button');
+                        noButton.onclick = () => {
+                          const noResponse = createChatLi("Den er grei! Er det noe annet du lurer på? 😊", "incoming");
+                          chatbox.appendChild(noResponse);
+                          chatbox.scrollTop = chatbox.scrollHeight;
+                        };
+  
+                        buttonContainer.appendChild(yesButton);
+                        buttonContainer.appendChild(noButton);
+                        chatbox.appendChild(buttonContainer);
+                        chatbox.scrollTop = chatbox.scrollHeight;
                       }
                       if (chatBubble) {
                         chatbox.appendChild(chatBubble);
@@ -581,20 +643,9 @@ const createFaqButtons = () => {
           });
         }, 500);
       }
-    }, 1500); // Consistent delay to simulate the typing effect initially
-  };  
-  
-const formatArticleMessage = (article) => {
-  // Adjust this formatting as needed to match your front-end's expected structure
-  return `
-    <div class="article-message">
-      <strong>${article.title}</strong><br>
-      Author: ${article.author}<br>
-      <p>${article.summary}</p>
-      <a href="${article.url}" target="_blank">Read more</a>
-    </div>
-  `;
-};
+    }, 1500); // Consistent delay to simulate the typing effect initially  
+  };
+
         // Function to handle chat messages
         function handleChat() {
           // Your existing handleChat function logic
