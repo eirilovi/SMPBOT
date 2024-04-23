@@ -318,7 +318,7 @@ body {
 .faq-button {
   margin: 3px 0; /* Provide 3px vertical spacing between buttons */
   width: calc(100% - 100px); /* Reduced width by additional 10px on each side */
-  padding: 10px 20px; /* 10px vertical padding and 20px horizontal padding */
+  padding: 10px 30px 10px 20px; /* 10px top and bottom padding, 20px left padding, 30px right padding */
   font-size: 0.9rem; /* Font size adjusted */
   background-color: #084c9c; /* Button color */
   color: white; /* Text color */
