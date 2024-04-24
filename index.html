@@ -41,9 +41,14 @@
         
         <div class="chatbox-spacer"></div>
         <div class="chat-input">
-            <textarea placeholder="Skriv her..." required></textarea>
-            <span id="send-btn" class="material-symbols-outlined">send</span>            
-        </div>
+          <div class="textarea-container">
+              <textarea placeholder="Skriv her..." required></textarea>
+              <div id="warning-message" class="warning hidden">
+                  <i class="error-icon material-symbols-outlined">error</i> Maksimalt antall tegn er 100
+              </div>
+          </div>
+          <span id="send-btn" class="material-symbols-outlined">send</span>
+      </div>      
     </div>
 </body>
 </html>

@@ -336,9 +336,20 @@ document.addEventListener('DOMContentLoaded', function () {
     // Function to resize textarea based on its content
     function resizeTextarea() {
       const chatInput = document.querySelector(".chat-input textarea");
-      chatInput.style.height = '50px';  // Reset the height
-      chatInput.style.height = chatInput.scrollHeight + 'px';  // Set to scroll height
+      const maxChars = 100; // Define the maximum number of characters allowed
+    
+      // Only adjust the height if the number of characters is within the limit
+      if (chatInput.value.length <= maxChars) {
+        chatInput.style.height = '50px';  // Reset the height to auto to allow shrinkage if content is removed
+        chatInput.style.height = chatInput.scrollHeight + 'px';  // Set to scroll height to fit content
+      }
+      // If the length exceeds the maxChars, ensure the textarea does not grow further
+      else {
+        chatInput.value = chatInput.value.substring(0, maxChars);  // Trim the value to maxChars
+        // Do not change the height - let it stay as is
+      }
     }
+    
 
     // Event Listener for resizing textarea
     document.querySelector(".chat-input textarea").addEventListener('input', resizeTextarea);
@@ -348,14 +359,24 @@ document.addEventListener('DOMContentLoaded', function () {
         // Add letter counter near the textarea
        const letterCount = document.querySelector(".chat-input textarea");
        const counter = document.createElement('div');
+       const warningMessage = document.querySelector("#warning-message");
+
        counter.classList.add('letter-counter');
        letterCount.parentNode.insertBefore(counter, letterCount.nextSibling);
-      counter.textContent = '0/100'; // Initial counter value
+       counter.textContent = '0/100'; // Initial counter value
         
-      letterCount.addEventListener('input', function() {
-       counter.textContent = `${this.value.length}/100`; // Update counter on input
+       letterCount.addEventListener('input', function() {
+        counter.textContent = `${this.value.length}/100`; // Update counter on input
         if (this.value.length > 100) {
           this.value = this.value.slice(0, 100); // Ensure the limit is enforced
+        }
+        // Toggle warning message and adjust container padding when user reaches 100 characters
+        if (this.value.length === 100) {
+          warningMessage.classList.add('visible');
+          textareaContainer.style.paddingBottom = '20px'; // Increase padding to make space for the warning
+        } else {
+          warningMessage.classList.remove('visible');
+          textareaContainer.style.paddingBottom = '0px'; // Reset padding
         }
       });
 
@@ -994,6 +1015,7 @@ const createFaqButtons = () => {
           resizeTextarea();  // Reset textarea height after clearing
           letterCount.value = ''; // Clear the textarea
           counter.textContent = '0/100'; // Reset the counter
+          warningMessage.classList.remove('visible');
       }
 
       // Event listeners for sending a message

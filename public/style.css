@@ -188,7 +188,7 @@ body {
 }
 
 .chatbox-spacer {
-  height: 82px; /* The height should match the height of your .chat-input area including any padding */
+  height: 85px; /* The height should match the height of your .chat-input area including any padding */
 }
 
 .chatbox .outgoing {
@@ -204,6 +204,7 @@ body {
 .chat-input {
   position: absolute;
   bottom: 0; /* Keeps the chat input at the bottom */
+  height: fit-content;
   left: 0; /* Aligns the chat input to the left */
   right: 0; /* Aligns the chat input to the right */
   display: flex;
@@ -215,21 +216,28 @@ body {
 
 .letter-counter {
   position: absolute;
-  bottom: 12px; /* Adjust as needed, depending on your padding */
-  right: 87px; /* This should be aligned with the padding of the textarea */
-  background-color: transparent; /* No background */
-  color: #666; /* Subtle color for the counter */
-  font-size: 0.8rem; /* Small font size so it doesn't distract from typing */
+  bottom: 15px; /* Initial position from the bottom */
+  right: 87px; /* Aligned with the padding of the textarea */
+  background-color: transparent;
+  color: #333; 
+  font-size: 0.8rem;
   border-radius: 4px;
-  color: #333;  
+  transition: bottom 0.3s ease; /* Smooth transition for the 'bottom' property */
 }
 
+.textarea-container {
+  flex-grow: 1;
+  transition: padding-bottom 0.3s ease; /* Transition for padding to give space for the warning */
+}
+
+
 .chat-input textarea {
+  width: calc(100% - 6px); /* Adjust based on the width of the send button */
   flex-grow: 1; /* Allows textarea to take up available space */
   border: 2px solid #d2d2d2; /* Adds a subtle border around the textarea */
   border-radius: 5px; /* Rounded corners similar to the chatbot window */
   padding: 20px 20px; /* Adjust padding for a slimmer look */
-  height: auto; /* Adjust height to make the textarea slimmer */
+  height: fit-content; /* Adjust height to make the textarea slimmer */
   resize: none; /* Prevents resizing to maintain layout integrity */
   font-size: 1rem; /* Sets a readable default font size */
   overflow-y: hidden; /* Enable vertical scrollbar when content exceeds the height */
@@ -288,6 +296,34 @@ body {
 
 .chatbot header span {
   display: block;
+}
+
+.warning {
+  color: red;
+  font-size: 0.9rem;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  visibility: hidden;
+}
+
+/* This class will be toggled by JavaScript */
+.warning.visible {
+  max-height: 50px; /* Adjust based on the actual height needed */
+  opacity: 1;
+  visibility: visible;
+  transition: max-height 0.3s ease, opacity 0.3s ease 0s; /* Opacity starts transitioning immediately after max-height */
+}
+
+.error-icon {
+  font-size: 0.9rem !important;  /* Ensures the icon is the same size as the text */
+  vertical-align: middle !important; /* Aligns the icon vertically with the text */
+  padding: 0 !important;         /* Removes any padding that might be inherited */
+  background: none !important;   /* Ensures no background is applied */
+  border: none !important;       /* Removes any borders */
+  cursor: default !important;    /* Ensures the cursor does not change to pointer */
+  transform: translateY(0px) !important; /* Force GPU acceleration and stabilize layout */
+  backface-visibility: hidden !important; /* Improve text rendering stability */
 }
 
 /* Add this to your CSS file for the typing animation */
