@@ -139,6 +139,17 @@ function smoothScrollToBottom(element) {
   window.requestAnimationFrame(step);
 }
 
+function limitTextInput() {
+  const chatInput = document.querySelector(".chat-input textarea");
+
+  // Add an event listener to handle input changes
+  chatInput.addEventListener('input', function() {
+    if (this.value.length > 100) {
+      this.value = this.value.slice(0, 100); // Cut down the value to 100 characters
+    }
+  });
+}
+
 function scrollToBottomOfChat() {
   const chatbox = document.querySelector(".chatbox");
   smoothScrollToBottom(chatbox);
@@ -332,6 +343,22 @@ document.addEventListener('DOMContentLoaded', function () {
     // Event Listener for resizing textarea
     document.querySelector(".chat-input textarea").addEventListener('input', resizeTextarea);
   
+      // Call the function to limit text input
+    limitTextInput();
+        // Add letter counter near the textarea
+       const letterCount = document.querySelector(".chat-input textarea");
+       const counter = document.createElement('div');
+       counter.classList.add('letter-counter');
+       letterCount.parentNode.insertBefore(counter, letterCount.nextSibling);
+      counter.textContent = '0/100'; // Initial counter value
+        
+      letterCount.addEventListener('input', function() {
+       counter.textContent = `${this.value.length}/100`; // Update counter on input
+        if (this.value.length > 100) {
+          this.value = this.value.slice(0, 100); // Ensure the limit is enforced
+        }
+      });
+
     // Start with the thinking animation
     showTypingAnimation();
   
@@ -965,6 +992,8 @@ const createFaqButtons = () => {
           generateResponse(userMessage); // Send user message to the server and handle response
           chatInput.value = ''; // Clear input field after sending
           resizeTextarea();  // Reset textarea height after clearing
+          letterCount.value = ''; // Clear the textarea
+          counter.textContent = '0/100'; // Reset the counter
       }
 
       // Event listeners for sending a message

@@ -187,6 +187,10 @@ body {
   margin: 5px;
 }
 
+.chatbox-spacer {
+  height: 82px; /* The height should match the height of your .chat-input area including any padding */
+}
+
 .chatbox .outgoing {
   justify-content: flex-end;
 }
@@ -198,6 +202,10 @@ body {
 }
 
 .chat-input {
+  position: absolute;
+  bottom: 0; /* Keeps the chat input at the bottom */
+  left: 0; /* Aligns the chat input to the left */
+  right: 0; /* Aligns the chat input to the right */
   display: flex;
   padding: 10px 15px; /* Provides padding around the elements */
   background: #fff; /* A clean, white background for the input area */
@@ -205,11 +213,22 @@ body {
   align-items: center; /* Aligns items vertically center */
 }
 
+.letter-counter {
+  position: absolute;
+  bottom: 12px; /* Adjust as needed, depending on your padding */
+  right: 87px; /* This should be aligned with the padding of the textarea */
+  background-color: transparent; /* No background */
+  color: #666; /* Subtle color for the counter */
+  font-size: 0.8rem; /* Small font size so it doesn't distract from typing */
+  border-radius: 4px;
+  color: #333;  
+}
+
 .chat-input textarea {
   flex-grow: 1; /* Allows textarea to take up available space */
   border: 2px solid #d2d2d2; /* Adds a subtle border around the textarea */
   border-radius: 5px; /* Rounded corners similar to the chatbot window */
-  padding: 10px 20px; /* Adjust padding for a slimmer look */
+  padding: 20px 20px; /* Adjust padding for a slimmer look */
   height: auto; /* Adjust height to make the textarea slimmer */
   resize: none; /* Prevents resizing to maintain layout integrity */
   font-size: 1rem; /* Sets a readable default font size */
