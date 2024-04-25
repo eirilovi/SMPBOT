@@ -332,22 +332,34 @@ document.addEventListener('DOMContentLoaded', function () {
     const sendChatBtn = document.querySelector(".chat-input span");
     const chatbox = document.querySelector(".chatbox");
 
-    // Function to resize textarea based on its content
-    function resizeTextarea() {
-      const chatInput = document.querySelector(".chat-input textarea");
-      const maxChars = 100; // Define the maximum number of characters allowed
-    
-      // Only adjust the height if the number of characters is within the limit
-      if (chatInput.value.length <= maxChars) {
-        chatInput.style.height = '50px';  // Reset the height to auto to allow shrinkage if content is removed
-        chatInput.style.height = chatInput.scrollHeight + 'px';  // Set to scroll height to fit content
-      }
-      // If the length exceeds the maxChars, ensure the textarea does not grow further
-      else {
-        chatInput.value = chatInput.value.substring(0, maxChars);  // Trim the value to maxChars
-        // Do not change the height - let it stay as is
-      }
-    }
+// Function to resize textarea based on its content
+function resizeTextarea() {
+  const chatInput = document.querySelector(".chat-input textarea");
+  const maxChars = 100; // Define the maximum number of characters allowed
+  const chatboxSpacer = document.querySelector('.chatbox-spacer');
+  const chatbox = document.querySelector('.chatbox');
+
+  let previousHeight = chatInput.style.height ? parseInt(chatInput.style.height) : 50; // Get previous height or default to 50px if not set
+
+  if (chatInput.value.length <= maxChars) {
+    chatInput.style.height = '40px';  // Reset the height to auto to allow shrinkage if content is removed
+    chatInput.style.height = chatInput.scrollHeight + 'px';  // Set to scroll height to fit content
+  } else {
+    chatInput.value = chatInput.value.substring(0, maxChars);  // Trim the value to maxChars
+  }
+
+  let currentHeight = parseInt(chatInput.style.height); // Get the new height
+  let heightDifference = currentHeight - previousHeight;
+
+  if (heightDifference !== 0) {
+    // Adjust the height of the chatbox spacer
+    chatboxSpacer.style.height = `${parseInt(getComputedStyle(chatboxSpacer).height) + heightDifference}px`;
+
+    // Optionally adjust the height of the chatbox to prevent the chatbot from resizing
+    chatbox.style.height = `${parseInt(getComputedStyle(chatbox).height) - heightDifference}px`;
+  }
+}
+
 
     // Event Listener for resizing textarea
     document.querySelector(".chat-input textarea").addEventListener('input', resizeTextarea);

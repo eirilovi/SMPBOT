@@ -148,7 +148,6 @@ body {
   padding-right: 5px; /* Padding on the right, creates space between scrollbar and text */
 }
 
-
 .chatbot .chat {
   display: flex;
 }
@@ -188,7 +187,7 @@ body {
 }
 
 .chatbox-spacer {
-  height: 85px; /* The height should match the height of your .chat-input area including any padding */
+  height: 75px; /* The height should match the height of your .chat-input area including any padding */
 }
 
 .chatbox .outgoing {
