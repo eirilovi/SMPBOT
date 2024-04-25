@@ -1025,6 +1025,7 @@ const createFaqButtons = () => {
           resizeTextarea();  // Reset textarea height after clearing
           counter.textContent = '0/100'; // Reset the counter
           warningMessage.classList.remove('visible');
+          counter.classList.remove('active'); // Apply the transformation
       }
 
       // Event listeners for sending a message
