@@ -24,7 +24,7 @@ function showTypingAnimation() {
 
   typingLi.appendChild(typingAnimationContainer);
   chatbox.appendChild(typingLi);
-  chatbox.scrollTop = chatbox.scrollHeight;
+  scrollToBottomOfChat();
 }
 
 // Define the hideTypingAnimation function
@@ -78,7 +78,7 @@ function hideTypingAnimation() {
         }, 1500); // adjust delay as needed
     } else {
         // All articles processed
-        chatbox.scrollTop = chatbox.scrollHeight;
+        scrollToBottomOfChat();
     }
 }
 
@@ -108,7 +108,122 @@ const formatArticleMessage = (article) => {
     `;
 }
 
+function smoothScrollToBottom(element) {
+  let start = null;
+  const duration = 200; // Duration of the animation in milliseconds
 
+  function step(timestamp) {
+      if (!start) start = timestamp;
+
+      const elapsedTime = timestamp - start;
+      const progress = elapsedTime / duration;
+
+      const currentPosition = element.scrollTop;
+      const targetPosition = element.scrollHeight - element.clientHeight;
+
+      // Use a simple ease-out function for smooth animation
+      // `progress` is squared to create an ease-out effect
+      const nextPosition = currentPosition + (targetPosition - currentPosition) * Math.min(progress * progress, 1);
+
+      element.scrollTop = nextPosition;
+
+      // Continue the animation as long as we haven't run out of time and haven't reached the target
+      if (elapsedTime < duration && element.scrollTop < targetPosition) {
+          window.requestAnimationFrame(step);
+      } else {
+          // Ensure it's exactly at the bottom in case of small discrepancies
+          element.scrollTop = targetPosition;
+      }
+  }
+
+  window.requestAnimationFrame(step);
+}
+
+function limitTextInput() {
+  const chatInput = document.querySelector(".chat-input textarea");
+
+  // Add an event listener to handle input changes
+  chatInput.addEventListener('input', function() {
+    if (this.value.length > 100) {
+      this.value = this.value.slice(0, 100); // Cut down the value to 100 characters
+    }
+  });
+}
+
+function scrollToBottomOfChat() {
+  const chatbox = document.querySelector(".chatbox");
+  smoothScrollToBottom(chatbox);
+}
+
+
+function fetchSimilarArticles(articleId) {
+  const chatbox = document.querySelector(".chatbox");
+  
+  // Start by showing the typing animation immediately when the button is clicked, before initiating the fetch.
+  showTypingAnimation();
+
+  fetch(`http://localhost:3000/similarArticles/${articleId}`)
+      .then(response => response.json())
+      .then(similarArticles => {
+          // Use setTimeout to introduce a controlled delay for showing results after fetching
+          setTimeout(() => {
+              hideTypingAnimation();
+              const introMessage = "Her er noen lignende artikler du kanskje vil like: 😊";
+              const introLi = createChatLi(introMessage, "incoming");
+              chatbox.appendChild(introLi);
+
+              if (similarArticles && similarArticles.length > 0) {
+                  processArticles(similarArticles, 0, chatbox);
+              } else {
+                  const noArticlesMessage = "Ingen lignende artikler funnet.";
+                  const noArticlesLi = createChatLi(noArticlesMessage, "incoming");
+                  chatbox.appendChild(noArticlesLi);
+                  scrollToBottomOfChat();
+              }
+          }, 1500); // This delay is to simulate the typing duration, not to compensate for fetch time
+      })
+      .catch(error => {
+          console.error('Error fetching similar articles:', error);
+          hideTypingAnimation();
+          const errorMessage = "Beklager, det oppstod en feil ved henting av lignende artikler.";
+          const errorLi = createChatLi(errorMessage, "incoming");
+          chatbox.appendChild(errorLi);
+          scrollToBottomOfChat();
+      });
+}
+
+function fetchContextArticles(articleId) {
+const chatbox = document.querySelector(".chatbox");
+showTypingAnimation();  // Start typing animation immediately
+
+fetch(`http://localhost:3000/articlesInSeries/${articleId}`)
+  .then(response => response.json())
+  .then(contextArticles => {
+    setTimeout(() => {
+      hideTypingAnimation();  // Hide typing animation after fetching data
+      const introMessage = "Disse artiklene er fra samme serie, og kan hjelpe deg med å få overblikk over saken:😊";
+      const introLi = createChatLi(introMessage, "incoming");
+      chatbox.appendChild(introLi);
+
+      if (contextArticles && contextArticles.length > 0) {
+        processArticles(contextArticles, 0, chatbox);  // Assuming you have a function to process and display articles
+      } else {
+        const noArticlesMessage = "Ingen andre artikler i denne serien.";
+        const noArticlesLi = createChatLi(noArticlesMessage, "incoming");
+        chatbox.appendChild(noArticlesLi);
+        scrollToBottomOfChat();
+      }
+    }, 1500);  // Delay to simulate the typing duration
+  })
+  .catch(error => {
+    console.error('Error fetching context articles:', error);
+    hideTypingAnimation();
+    const errorMessage = "Beklager, det oppstod en feil ved henting av artikler fra serien.";
+    const errorLi = createChatLi(errorMessage, "incoming");
+    chatbox.appendChild(errorLi);
+    scrollToBottomOfChat();
+  });
+}
 
 
 const handleCategoryAction = (category, action) => {
@@ -156,21 +271,21 @@ const handleCategoryAction = (category, action) => {
           processArticles(articles, 0, chatbox);
         }
       }
-      chatbox.scrollTop = chatbox.scrollHeight;
+      scrollToBottomOfChat();
     })
     .catch(error => {
       console.error('Error:', error);
       hideTypingAnimation();
       chatbox.appendChild(createChatLi("Sorry, there was an error fetching the articles.", "incoming"));
-      chatbox.scrollTop = chatbox.scrollHeight;
+      scrollToBottomOfChat();
     });
 };
 
 document.addEventListener('DOMContentLoaded', function () {
   const chatbotToggler = document.querySelector(".chatbot-toggler");
   const chatbot = document.querySelector(".chatbot");
+  
   let isChatbotInitialized = false;
-
   
   function getArticleIdFromUrl() {
     const url = new URL(window.location.href);
@@ -197,7 +312,7 @@ document.addEventListener('DOMContentLoaded', function () {
           const summaryLi = createChatLi(formattedSummary, "incoming");
           const chatbox = document.querySelector(".chatbox");
           chatbox.appendChild(summaryLi);
-          chatbox.scrollTop = chatbox.scrollHeight;
+          scrollToBottomOfChat();
         }
       })
       .catch(error => {
@@ -206,79 +321,9 @@ document.addEventListener('DOMContentLoaded', function () {
         const errorLi = createChatLi(errorMessage, "incoming");
         const chatbox = document.querySelector(".chatbox");
         chatbox.appendChild(errorLi);
-        chatbox.scrollTop = chatbox.scrollHeight;
+        scrollToBottomOfChat();
       }).finally(hideTypingAnimation);
   }
-  
-
-  function fetchSimilarArticles(articleId) {
-    const chatbox = document.querySelector(".chatbox");
-    
-    // Start by showing the typing animation immediately when the button is clicked, before initiating the fetch.
-    showTypingAnimation();
-
-    fetch(`http://localhost:3000/similarArticles/${articleId}`)
-        .then(response => response.json())
-        .then(similarArticles => {
-            // Use setTimeout to introduce a controlled delay for showing results after fetching
-            setTimeout(() => {
-                hideTypingAnimation();
-                const introMessage = "Her er noen lignende artikler du kanskje vil like: 😊";
-                const introLi = createChatLi(introMessage, "incoming");
-                chatbox.appendChild(introLi);
-
-                if (similarArticles && similarArticles.length > 0) {
-                    processArticles(similarArticles, 0, chatbox);
-                } else {
-                    const noArticlesMessage = "Ingen lignende artikler funnet.";
-                    const noArticlesLi = createChatLi(noArticlesMessage, "incoming");
-                    chatbox.appendChild(noArticlesLi);
-                    chatbox.scrollTop = chatbox.scrollHeight;
-                }
-            }, 1500); // This delay is to simulate the typing duration, not to compensate for fetch time
-        })
-        .catch(error => {
-            console.error('Error fetching similar articles:', error);
-            hideTypingAnimation();
-            const errorMessage = "Beklager, det oppstod en feil ved henting av lignende artikler.";
-            const errorLi = createChatLi(errorMessage, "incoming");
-            chatbox.appendChild(errorLi);
-            chatbox.scrollTop = chatbox.scrollHeight;
-        });
-}
-
-function fetchContextArticles(articleId) {
-  const chatbox = document.querySelector(".chatbox");
-  showTypingAnimation();  // Start typing animation immediately
-
-  fetch(`http://localhost:3000/articlesInSeries/${articleId}`)
-    .then(response => response.json())
-    .then(contextArticles => {
-      setTimeout(() => {
-        hideTypingAnimation();  // Hide typing animation after fetching data
-        const introMessage = "Disse artiklene er fra samme serie, og kan hjelpe deg med å få overblikk over saken:😊";
-        const introLi = createChatLi(introMessage, "incoming");
-        chatbox.appendChild(introLi);
-
-        if (contextArticles && contextArticles.length > 0) {
-          processArticles(contextArticles, 0, chatbox);  // Assuming you have a function to process and display articles
-        } else {
-          const noArticlesMessage = "Ingen andre artikler i denne serien.";
-          const noArticlesLi = createChatLi(noArticlesMessage, "incoming");
-          chatbox.appendChild(noArticlesLi);
-          chatbox.scrollTop = chatbox.scrollHeight;
-        }
-      }, 1500);  // Delay to simulate the typing duration
-    })
-    .catch(error => {
-      console.error('Error fetching context articles:', error);
-      hideTypingAnimation();
-      const errorMessage = "Beklager, det oppstod en feil ved henting av artikler fra serien.";
-      const errorLi = createChatLi(errorMessage, "incoming");
-      chatbox.appendChild(errorLi);
-      chatbox.scrollTop = chatbox.scrollHeight;
-    });
-}
 
   //Function to initialize Chatbot
   function initializeChatbot() {
@@ -287,7 +332,54 @@ function fetchContextArticles(articleId) {
     const chatInput = document.querySelector(".chat-input textarea");
     const sendChatBtn = document.querySelector(".chat-input span");
     const chatbox = document.querySelector(".chatbox");
+
+    // Function to resize textarea based on its content
+    function resizeTextarea() {
+      const chatInput = document.querySelector(".chat-input textarea");
+      const maxChars = 100; // Define the maximum number of characters allowed
+    
+      // Only adjust the height if the number of characters is within the limit
+      if (chatInput.value.length <= maxChars) {
+        chatInput.style.height = '50px';  // Reset the height to auto to allow shrinkage if content is removed
+        chatInput.style.height = chatInput.scrollHeight + 'px';  // Set to scroll height to fit content
+      }
+      // If the length exceeds the maxChars, ensure the textarea does not grow further
+      else {
+        chatInput.value = chatInput.value.substring(0, maxChars);  // Trim the value to maxChars
+        // Do not change the height - let it stay as is
+      }
+    }
+    
+
+    // Event Listener for resizing textarea
+    document.querySelector(".chat-input textarea").addEventListener('input', resizeTextarea);
   
+      // Call the function to limit text input
+    limitTextInput();
+        // Add letter counter near the textarea
+       const letterCount = document.querySelector(".chat-input textarea");
+       const counter = document.createElement('div');
+       const warningMessage = document.querySelector("#warning-message");
+
+       counter.classList.add('letter-counter');
+       letterCount.parentNode.insertBefore(counter, letterCount.nextSibling);
+       counter.textContent = '0/100'; // Initial counter value
+        
+       letterCount.addEventListener('input', function() {
+        counter.textContent = `${this.value.length}/100`; // Update counter on input
+        if (this.value.length > 100) {
+          this.value = this.value.slice(0, 100); // Ensure the limit is enforced
+        }
+        // Toggle warning message and adjust container padding when user reaches 100 characters
+        if (this.value.length === 100) {
+          warningMessage.classList.add('visible');
+          textareaContainer.style.paddingBottom = '20px'; // Increase padding to make space for the warning
+        } else {
+          warningMessage.classList.remove('visible');
+          textareaContainer.style.paddingBottom = '0px'; // Reset padding
+        }
+      });
+
     // Start with the thinking animation
     showTypingAnimation();
   
@@ -299,7 +391,7 @@ function fetchContextArticles(articleId) {
         : "Hei! Jeg er Sunnmørspostens Chatbot!";
   
       chatbox.appendChild(createChatLi(greetingMessage, "incoming"));
-      chatbox.scrollTop = chatbox.scrollHeight;
+      scrollToBottomOfChat();
   
       // Start the thinking animation again
       showTypingAnimation();
@@ -325,7 +417,7 @@ function fetchContextArticles(articleId) {
             : "Trykk på en av knappene, eller spør et spørsmål i chatten.😊";
   
           chatbox.appendChild(createChatLi(clickButtonMessage, "incoming"));
-          chatbox.scrollTop = chatbox.scrollHeight;
+          scrollToBottomOfChat();
         }, 1500); // Delay for the third thinking animation
   
       }, 1500); // Delay for the second thinking animation
@@ -343,7 +435,8 @@ const createFaqButtons = () => {
     { text: "Bli Abonnent", pattern: "bli abonnent" },
     { text: "Relevante artikler", pattern: "fetch relevant articles" },
     { text: "Artikler for Ungdom", pattern: "fetch ungdom articles" },  // Changed pattern
-    { text: "Kategorier", pattern: "hvilke kategorier" }
+    { text: "Kategorier", pattern: "hvilke kategorier" },
+    { text: "Kundeservice", pattern: "kundeservice sporsmal" }
   ];
 
   // Create container div for FAQ buttons
@@ -359,8 +452,8 @@ const createFaqButtons = () => {
   });
 
   chatbox.appendChild(createChatLi(buttonsContainer, "incoming"));
-  chatbox.scrollTop = chatbox.scrollHeight;
-
+  scrollToBottomOfChat();
+  
   // Attach event listeners to FAQ buttons
   const faqButtons = chatbox.querySelectorAll('.faq-button');
   faqButtons.forEach(button => {
@@ -371,7 +464,7 @@ const createFaqButtons = () => {
   });
     // Append FAQ buttons to the chatbox
     chatbox.appendChild(createChatLi(buttonsContainer, "incoming"));
-    chatbox.scrollTop = chatbox.scrollHeight;
+    scrollToBottomOfChat();
 };
 
   // Function to create article-specific buttons
@@ -408,7 +501,262 @@ const createFaqButtons = () => {
     return buttonsContainer;
   }
 
+  function fetchCSButtons() {
+    const chatbox = document.querySelector(".chatbox");
+    const buttonsContainer = document.createElement('div');
+    buttonsContainer.classList.add('faq-buttons-container');
+  
+    const csButtons = [
+      { text: "Innlogging på våre digitale produkter", pattern: "digitalLogin" },
+      { text: "Levering av papiravis", pattern: "paperDelivery" },
+      { text: "Kjøp og endring av abonnement", pattern: "subscriptionManagement" },
+      { text: "Betaling og faktura", pattern: "billingAndInvoices" },
+    ];
+  
+    csButtons.forEach(btn => {
+      const button = document.createElement('button');
+      button.classList.add('faq-button', 'cs-button'); // Apply classes for styling
+      button.textContent = btn.text;
+      // Use a generic handler and pass the pattern to handle specific actions
+      button.onclick = () => handleCSAction(btn.pattern);
+      button.setAttribute('data-pattern', btn.pattern); // Store the pattern as an attribute
+      buttonsContainer.appendChild(button);
+    });
+  
+    chatbox.appendChild(createChatLi(buttonsContainer, "incoming"));
+    scrollToBottomOfChat();
+  }
+  
+  function handleCSAction(pattern) {
+    const chatbox = document.querySelector(".chatbox");
+    showTypingAnimation(); // Start typing animation
+  
+    setTimeout(() => {
+      hideTypingAnimation(); // Hide typing animation initially
+      const categoryNames = {
+        "digitalLogin": "Innlogging på våre digitale produkter",
+        "subscriptionManagement": "Kjøp og endring av abonnement",
+        "billingAndInvoices": "Betaling og faktura",
+        "paperDelivery": "Levering av papiravis"
+      };
+  
+      if (categoryNames[pattern]) {
+        const categoryMessage = `Du valgte "${categoryNames[pattern]}" Trykk på knappene for å få svar på spørsmålet. 😊`;
+        chatbox.appendChild(createChatLi(categoryMessage, "incoming"));
+        scrollToBottomOfChat();
+      }
+  
+      // Introduce a slight delay before showing options
+      showTypingAnimation();
+      setTimeout(() => {
+        hideTypingAnimation(); // Hide typing animation before showing buttons
+        const buttonsContainer = document.createElement('div');
+        buttonsContainer.classList.add('faq-buttons-container');
+        
+        let options;
+        if (pattern === "digitalLogin") {
+          options = [
+            { text: "Konto og innlogging", pattern: "accountAndLogin" },
+            { text: "Tilgang og abonnement", pattern: "accessAndSubscription" },
+            { text: "Tekniske problemer og assistanse", pattern: "technicalIssues" },
+            { text: "Generelle spørsmål om tjenestene", pattern: "generalQuestions" }
+          ];
+        } else if (pattern === "subscriptionManagement") {
+          options = [
+            { text: "Abonnementstyper og priser?", answer: "Oversikt over alle abonnementstyper og priser finner du <a href=https://www.smp.no/dakapo/productpage/SPO>her.</a>"},
+            { text: "Hva er inkludert i et abonnement?", answer: "Alle abonnenter får følgende inkludert i sitt abonnement: Tilgang til alle saker som ligger på nettavisen (Pluss-saker), eAvisen, den elektroniske versjonen av papiravisen, Digitalt arkiv, +Nyhetsbrev og fordelsbrev, Familiedeling (del din digitale tilgang med inntil 3 familiemedlemmer: Unntak: bedriftsabonnement og UNG). I tillegg får abonnenter som har Komplett- eller Helgeabonnement også papiravis." },
+            { text: "Hvordan dele abonnement i familien?", answer: "Du kan dele abonnementet med inntil tre personer i familien (gjelder ikke bedriftsabonnement eller UNG-abonnement). Du kan velge hvem du gir tilgang til på <a href=https://minside.smp.no/familiedeling>Min Side.</a>" },
+            { text: "Administrasjon av abonnementet?", answer: "Dette gjør du enkelt via <a href=https://minside.smp.no/>Min Side.</a>" },
+            { text: "Kan jeg få bare papiravisen?", answer: "Nei, digital tilgang er inkludert i alle våre abonnement." },
+            { text: "Digital tilgang med papiravisen?", answer: "Alle som abonnerer på papiravisen får automatisk tilgang til alt som publiseres på nett og mobil. Det eneste man må gjøre er å <a href=https://minside.smp.no/> opprette en Schibsted-konto, eller logge inn</a> hvis du har Schibsted-konto fra før."},
+            { text: "Kjøpe en enkelt artikkel?", answer: "Nei, det er ikke mulig å kjøpe tilgang til/få tilsendt enkelt artikler." }
+          ];              
+        } else if (pattern === "billingAndInvoices") {
+          options = [
+            { text: "Betalingsrelaterte spørsmål", pattern: "betalingsspørsmål" },
+            { text: "Abonnementshåndtering og endringer", pattern: "Abonnementshandtering"},
+          ];
+        } else if (pattern === "paperDelivery") {
+          options = [
+            { text: "Stoppe papiravisen under reise?", answer: "Papiravisen stoppes enkelt på <a href=https://minside.smp.no/endre-avislevering>MinSide.</a> Du vil fortsatt ha tilgang til å lese eAvisen og plussartiklene på nettavisen." },
+            { text: "Refusjon ved midlertidig stopp av papiravisen?", answer: "Nei. Selv om du stanser levering av papiravisen, har du fortsatt tilgang til eAvisen og nettavis. Du har derfor fortsatt tilgang til innholdet du har betalt for." },
+            { text: "Leverandør av avisen?", answer: "Vår avis får du på hverdager levert med Polaris Distribusjon eller Posten. Hvis avisen skal leveres utenfor avisens region, brukes i noen tilfeller et lokalt distribusjonsselskap. Hvis det leveres avis på din adresse på lørdager, leveres lørdagsavisen med Polaris Distribusjon eller et lokalt distribusjonsselskap." },
+            { text: "Forventet leveringstidspunkt for avisen?", answer: "Det varierer med leveringsmåte. Posten har leveransefrist kl. 17.00 på hverdager. Polaris Distribusjon har leveransefrist mellom kl. 06.30-09.00 på hverdager. Hvis det leveres avis på din adresse på lørdager, er leveransefristen kl. 17.00 Du finner informasjon angående levering på din adresse på Min Side. NB: Ved levering utenfor avisens region, vil Posten/det lokale distribusjonsselskapet kunne bruke 2-3 virkedager på leveransen. Leveringen har også forholdt relatert til den nye Postloven som trådte i kraft juli 2020." },
+            { text: "Jeg er abonnent og har ikke fått papiravisen min. Kan jeg få den etterlevert eller godskrevet?", answer: "Vi har dessverre ikke mulighet til å etterlevere <a href=https://minside.smp.no/publication.epaperpage>Eavisen.</a> Eventuell godskriving skjer i henhold til <a href=https://minside.smp.no/vilkaar>gjeldende abonnementsvilkår</a>."},
+            { text: "Manglende levering av papiravis?", answer: "Tilbakemelding på dagens avislevering kan gjøres <a href=https://minside.smp.no/tilbakemelding>her.</a>" }
+          ];
+        }
 
+        if (options) {
+          options.forEach(opt => {
+            const button = document.createElement('button');
+            button.classList.add('faq-button', 'sub-cs-button');
+            button.textContent = opt.text;
+            button.onclick = () => {
+              showTypingAnimation();
+              setTimeout(() => {
+                if (opt.pattern === "accountAndLogin" || opt.pattern === "accessAndSubscription" || opt.pattern === "technicalIssues" || opt.pattern === "generalQuestions") {
+                  handleDigitalLoginSubAction(opt.pattern);
+                } else if (opt.pattern === "betalingsspørsmål" || opt.pattern === "Abonnementshandtering") {
+                  handleBillingAndInvoicesSubAction(opt.pattern);
+                } else {
+                  const answerMessage = `<strong>${opt.text}</strong><br>${opt.answer}`;
+                  chatbox.appendChild(createChatLi(answerMessage, "incoming"));
+                }
+                hideTypingAnimation();
+                scrollToBottomOfChat();
+              }, 1500);
+            };
+            buttonsContainer.appendChild(button);
+          });
+        }
+  
+        chatbox.appendChild(createChatLi(buttonsContainer, "incoming"));
+        scrollToBottomOfChat();
+      }, 500); // Delay for processing the user's choice
+    }, 1500); // Initial delay to mimic typing and processing
+  }
+  
+  
+  function handleDigitalLoginSubAction(pattern) {
+    const chatbox = document.querySelector(".chatbox");
+    const details = {
+      "accountAndLogin": [
+        { text: "Hva er en Schibsted-konto (tidligere SPiD)?", answer: "Vi benytter Schibsted-konto for å identifisere deg som kunde, mer informasjon om Schibsted finner du <a href=https://info.privacy.schibsted.com/no/hva-er-en-schibsted-konto/ target=_blank>her</a>." },
+        { text: "Finner ikke denne kombinasjonen av e-post og passord", answer: "Dette betyr at passordet ditt er feil. Trykk 'Glemt passord?' der du logger inn, og følg instruksene for å lage et nytt passord." },
+        { text: "Jeg har byttet e-postadresse, hva gjør jeg for å få digital tilgang med denne?", answer: "For å bytte e-postadresse på Schibsted-kontoen din må du endre selve <a href=https://payment.schibsted.no/account/summary?redirect_uri=https://www.smp.no>Schibsted-brukeren.</a>"}
+      ],
+      "accessAndSubscription": [
+        { text: "Finner ikke abonnementet mitt?", answer: "Det kan være at du er logget inn med en annen e-postadresse enn den vi har registrert på abonnementet. Logg ut, og logg deretter inn med riktig e-postadresse." },
+        { text: "Innlogget, men kan ikke lese eAvis/plussartikler?", answer: "Det kan være at du er logget inn med en annen e-postadresse enn den vi har registrert på abonnementet. Logg ut, og logg deretter inn med riktig e-postadresse." },
+        { text: "Hva er Min Side?", answer: "På Min side kan du administrere ditt abonnement. Her kan du administrere alt fra omadressering til familiedeling. For å kunne benytte deg av min side, må du være innlogget med din Schibsted-bruker." },
+        { text: "Hvorfor må jeg godkjenne vilkår?", answer: "Når du logger på for første gang, må du godkjenne våre og Schibsted sine brukervilkår og personvernserklæringer." },
+      ],
+      "technicalIssues": [
+        { text: "Nedlastingen av eAvisen stopper, tips?", answer: "Dersom du opplever at nedlastingen av en utgave stanser opp, kan det skyldes flere årsaker. Du har ikke mer tilgjengelig lagringsplass for aviser på din enhet. Appen har en viss mengde tilegnet plass til lagring av aviser, og kan ikke bruke mer enn dette. Nederst i applikasjonen er det en knapp som heter 'Lagrede aviser'. Når du klikker på denne ser du de avisene som ligger lagret på din enhet, og de som det er påbegynt nedlasting av. Dersom du holder fingeren over en av disse utgavene får du valg om å slette utgaven. Prøv å slette et par gamle utgaver og start nedlastingen av dagens utgave på nytt." },
+        { text: "Hvor er kundenummeret mitt?", answer: "Kundenummeret ditt står på fakturaen du får tilsendt fra oss, denne finner du bl.a. på Min Side." }
+      ],
+      "generalQuestions": [
+        { text: "Krever eAvis Schibsted-konto?", answer: "Ja, for å lese eAvisa og plussartiklene på nettavisen må du ha en Schibsted-konto, samt et abonnement." },
+        { text: "Hvor kan jeg lese eAvisen?", answer: "eAvisen kan leses på PC og Mac, samt alle smarttelefoner og nettbrett som har iOS (iPhone og iPad) og Android. Last ned vår eAvis-app kostnadsfritt fra App store eller Google play, eAvisen fungerer på alle enheter som kjører iOS (iPhone og iPad) eller Android." },
+        { text: "Når er eAvisen tilgjengelig?", answer: "eAvisen er tilgjengelig senest kl 22:00 på alle plattformer." },
+        { text: "Hvor finner jeg tidligere artikler?", answer: "Avisene tilbake til 2003 er tilgjengelig via digitalt abonnement. Gamle enkeltutgaver kan også kjøpes <a href=https://www.buyandread.com/>her.</a> I tillegg kan eldre aviser leses digitalt på de fleste bibliotek. Man kan også lese tidligere aviser på Nasjonalbiblioteket sin <a href=https://www.nb.no/search?mediatype=aviser>nettside.</a>" }
+      ]
+    };
+    const categoryNames = {
+      "accountAndLogin": "Konto og innlogging",
+      "accessAndSubscription": "Tilgang og abonnement",
+      "technicalIssues": "Tekniske problemer og assistanse",
+      "generalQuestions": "Generelle spørsmål om tjenestene"
+    };
+
+    const categoryMessage = `Du valgte "${categoryNames[pattern]}" Trykk på knappene for å få svar på spørsmålet. 😊`;
+    chatbox.appendChild(createChatLi(categoryMessage, "incoming"));
+  
+    showTypingAnimation();
+    setTimeout(() => {
+      hideTypingAnimation();
+      const questions = details[pattern];
+    
+      if (questions) {
+        const buttonsContainer = document.createElement('div');
+        buttonsContainer.classList.add('faq-buttons-container');
+    
+        questions.forEach(question => {
+          const button = document.createElement('button');
+          button.classList.add('faq-button', 'sub-cs-button');
+          button.textContent = question.text;
+          button.onclick = () => {
+            showTypingAnimation();
+            setTimeout(() => {
+              const answerMessage = `<strong>${question.text}</strong><br>${question.answer}`;
+              chatbox.appendChild(createChatLi(answerMessage, "incoming"));
+              hideTypingAnimation();
+              scrollToBottomOfChat();
+            }, 1500);
+          };
+          buttonsContainer.appendChild(button);
+        });
+    
+        chatbox.appendChild(createChatLi(buttonsContainer, "incoming"));
+        scrollToBottomOfChat();
+      } else {
+        const message = "There are no specific questions available for this category.";
+        chatbox.appendChild(createChatLi(message, "incoming"));
+      }
+    }, 1500);
+  }
+
+  function handleBillingAndInvoicesSubAction(pattern) {
+    const chatbox = document.querySelector(".chatbox");
+    const categoryNames = {
+      "Abonnementshåndtering": "Betalingsrelaterte spørsmål",
+      "betalingsspørsmål": "Abonnementshåndtering og endringer"
+    };
+    const details = {
+    
+  "betalingsspørsmål": [
+    { text: "Kvittering for kortkjøp?", answer: "Kvitteringer for ditt kjøp finner du  <a href=https://payment.schibsted.no/account/purchasehistory/?redirect_uri=https://www.smp.no>her.</a>" },
+    { text: "Feil beløp ved abonnementsbestilling?", answer: "Dersom dette skyldes feil fra vår side vil vi selvsagt rydde opp i situasjonen. Ta kontakt med vårt kundesenter: abonnement@smp.no, så hjelper vi deg." },
+    { text: "Unngå fakturagebyr?", answer: "For å unngå fakturagebyr, anbefaler vi deg å opprette e-faktura eller avtalegiro i din nettbank. Alternativt kan kundeservice bistå med å få endret til e-postfaktura. Ved bestilling på nett kan du registrere ditt betalingskort og dette vil automatisk bli belastet, det påløper da ingen gebyrer." },
+    { text: "Opprette eFaktura?", answer: "Avtalen må opprettes i mobilbank eller nettbank. Når du betaler en regning i nettbanken din, vil du få spørsmål om du vil inngå avtale om eFaktura fra betalingsmottakere som tilbyr dette. Du kan da enkelt takke ja til dette og opprette avtale. Fra 15. mai 2022 må du som eFakturakunde gi en generell aksept for eFaktura for å fortsette å være eFaktura-bruker. Dette omtales som 'Ja takk til alle' eller Alltid eFaktura, avhengig av hvilken bank eller betalingsapp du har. For å fortsatt kunne motta regninger og faktura som eFaktura, er det viktig at du aksepterer 'Ja takk til alle' i din nettbank eller betalingsapp. Dersom aksepten ikke gjennomføres før fristen, vil du ikke lenger motta eFaktura etter 15. mai 2022. Merk at allerede fra 1. desember 2021 må du gi generell aksept for eFaktura «Ja takk til alle» for å kunne motta regninger fra bedrifter som du tidligere ikke har mottatt eFaktura fra. Vi oppfordrer derfor alle som ønsker å benytte eFaktura om å inngå «Ja takk til alle»-avtale snarest mulig." },
+    { text: "Betalingspåminnelse etter betalt faktura?", answer: "Din innbetaling og vår betalingspåminnelse kan ha krysset hverandre. Send oss en kvittering av innbetalingen via e-post så vi får sjekket at alt er i orden: abonnement@smp.no." },
+    { text: "Hvorfor Polaris Media som betalingsmottaker?", answer: "Vi er en del av Polaris Media konsernet. Det betyr din innbetaling vil gå til Polaris Media, da det er de som fakturerer våre abonnement." }
+  ],
+  "Abonnementshåndtering": [
+    { text: "Angrerett på digitalt kjøp?", answer: "I henhold til angrerettloven går angreretten tapt ved kjøp av digitale tjenester i det man med samtykke tar i bruk tjenesten. Du kan avslutte abonnementet <a href=https://minside.smp.no/avslutt>her.</a>" },
+    { text: "Restgiro etter abonnementssigelse?", answer: "Dersom abonnementet ble sagt opp etter forfall, så vil du få en faktura for perioden mellom forfall og avslutning av abonnement." },
+    { text: "Endre fakturaperiode?", answer: "Du kan endre fakturaperioden ved å ta kontakt med kundeservice. Alternativene vi har er 1-, 3- og 12-månedsfaktura." },
+    { text: "Oppdatere betalingsinformasjon?", answer: "Betalingsmåte kan endres <a href=https://minside.smp.no/oppdaterkort>her.</a> "},
+    { text: "Abonnement fornyet til redusert pris?", answer: "Alle våre abonnement er løpende til det blir sagt opp. Dersom man bestiller et abonnement til reduser pris og abonnementet ikke blir sagt opp, vil abonnementet løpe videre til ordinær pris." }
+  ]
+    };
+    const categoryMessage = `Du valgte "${categoryNames[pattern]}" Trykk på knappene for å få svar på spørsmålet. 😊`;
+    chatbox.appendChild(createChatLi(categoryMessage, "incoming"));
+  
+    showTypingAnimation();
+    setTimeout(() => {
+      hideTypingAnimation();
+      const questions = details[pattern];
+  
+      if (questions) {
+        const buttonsContainer = document.createElement('div');
+        buttonsContainer.classList.add('faq-buttons-container');
+  
+        questions.forEach(question => {
+          const button = document.createElement('button');
+          button.classList.add('faq-button', 'sub-cs-button');
+          button.textContent = question.text;
+          button.onclick = () => {
+            showTypingAnimation();
+            setTimeout(() => {
+              const answerMessage = `<strong>${question.text}</strong><br>${question.answer}`;
+              chatbox.appendChild(createChatLi(answerMessage, "incoming"));
+              hideTypingAnimation();
+              scrollToBottomOfChat();
+            }, 1500);
+          };
+          buttonsContainer.appendChild(button);
+        });
+  
+        chatbox.appendChild(createChatLi(buttonsContainer, "incoming"));
+      } else {
+        const message = "There are no specific questions available for this category.";
+        chatbox.appendChild(createChatLi(message, "incoming"));
+      }
+      scrollToBottomOfChat();
+    }, 1500);
+  }  
+  
+  function handleQuestionResponse(questionText, answer) {
+    const chatbox = document.querySelector(".chatbox");
+    const message = `<strong>Question:</strong> ${questionText}<br><strong>Answer:</strong> ${answer}`; // Displaying question and answer
+    chatbox.appendChild(createChatLi(message, "incoming"));
+    scrollToBottomOfChat();
+  }
+  
+  
+  
   const fetchAndDisplayCategories = () => {
     return new Promise((resolve, reject) => {
       fetch('http://localhost:3000/categories')
@@ -465,29 +813,31 @@ const createFaqButtons = () => {
                   });
   
                   chatbox.appendChild(createChatLi(optionsContainer, "incoming"));
-                  chatbox.scrollTop = chatbox.scrollHeight;
+                  scrollToBottomOfChat();
                   
                   hideTypingAnimation(); // Hide typing animation after category processing
                 }, 1500); // Adjust the timeout duration as per your requirements
               });
             });
   
-            chatbox.scrollTop = chatbox.scrollHeight;
+            scrollToBottomOfChat();
             resolve(); // Resolve the promise after categories are displayed
           } else {
             chatbox.appendChild(createChatLi("There are no categories available at the moment.", "incoming"));
             reject(new Error("No categories available")); // Reject the promise if no categories are found
           }
-          chatbox.scrollTop = chatbox.scrollHeight;
+          scrollToBottomOfChat();
         })
         .catch(error => {
           console.error('Error fetching categories:', error);
           chatbox.appendChild(createChatLi("Sorry, I am unable to fetch categories at the moment.", "incoming"));
-          chatbox.scrollTop = chatbox.scrollHeight;
+          scrollToBottomOfChat();
           reject(error); // Reject the promise on error
         });
     });
   };
+
+  
 
   const generateResponse = (userMessage) => {
     const userMessageLower = userMessage.toLowerCase();
@@ -508,6 +858,12 @@ const createFaqButtons = () => {
             hideTypingAnimation(); // Hide animation on error
           });
         }, 500);
+      } else if (userMessageLower.includes("kundeservice sporsmal")) {
+        showTypingAnimation();
+        setTimeout(() => {
+          fetchCSButtons(); // Run the function to generate customer service buttons
+          hideTypingAnimation();
+        }, 500);
       } else if (userMessageLower.includes("fetch ungdom articles")) {
         showTypingAnimation();
         setTimeout(() => {
@@ -518,7 +874,7 @@ const createFaqButtons = () => {
               hideTypingAnimation();
               const introMessage = "Her er noen artikler for ungdom du kanskje vil like: 😊";
               chatbox.appendChild(createChatLi(introMessage, "incoming"));
-              chatbox.scrollTop = chatbox.scrollHeight; // Ensure scroll adjustment after the intro
+              scrollToBottomOfChat(); // Ensure scroll adjustment after the intro
               processArticles(articles, 0, chatbox);
             })
             .catch(error => {
@@ -538,7 +894,7 @@ const createFaqButtons = () => {
               if (data.articles && data.articles.length > 0) {
                 const introMessage = data.message;
                 chatbox.appendChild(createChatLi(introMessage, "incoming"));
-                chatbox.scrollTop = chatbox.scrollHeight; // Ensure scroll adjustment after the intro
+                scrollToBottomOfChat(); // Ensure scroll adjustment after the intro
                 processArticles(data.articles, 0, chatbox);
               } else {
                 chatbox.appendChild(createChatLi("Det er for tiden ingen relevante artikler å vise.", "incoming"));
@@ -611,17 +967,17 @@ const createFaqButtons = () => {
                         noButton.onclick = () => {
                           const noResponse = createChatLi("Den er grei! Er det noe annet du lurer på? 😊", "incoming");
                           chatbox.appendChild(noResponse);
-                          chatbox.scrollTop = chatbox.scrollHeight;
+                          scrollToBottomOfChat();
                         };
   
                         buttonContainer.appendChild(yesButton);
                         buttonContainer.appendChild(noButton);
                         chatbox.appendChild(buttonContainer);
-                        chatbox.scrollTop = chatbox.scrollHeight;
+                        scrollToBottomOfChat();
                       }
                       if (chatBubble) {
                         chatbox.appendChild(chatBubble);
-                        chatbox.scrollTop = chatbox.scrollHeight; // Adjust scroll after each message
+                        scrollToBottomOfChat();
                       }
                     }, 500); // simulate typing for each response
                   }, index * 1000); // stagger the display of each response
@@ -629,11 +985,11 @@ const createFaqButtons = () => {
               } else {
                 // Handle a single response
                 chatbox.appendChild(createChatLi(data.response, "incoming"));
-                chatbox.scrollTop = chatbox.scrollHeight; // Adjust scroll after single message
+                scrollToBottomOfChat();
               }
             } else {
               chatbox.appendChild(createChatLi("Received data, but format was unexpected.", "incoming"));
-              chatbox.scrollTop = chatbox.scrollHeight; // Adjust scroll after unexpected data
+              scrollToBottomOfChat();
             }
           })
           .catch(error => {
@@ -653,9 +1009,13 @@ const createFaqButtons = () => {
           if (!userMessage) return;
 
           chatbox.appendChild(createChatLi(userMessage, "outgoing"));
-          chatbox.scrollTop = chatbox.scrollHeight;
+          scrollToBottomOfChat();
           generateResponse(userMessage); // Send user message to the server and handle response
           chatInput.value = ''; // Clear input field after sending
+          resizeTextarea();  // Reset textarea height after clearing
+          letterCount.value = ''; // Clear the textarea
+          counter.textContent = '0/100'; // Reset the counter
+          warningMessage.classList.remove('visible');
       }
 
       // Event listeners for sending a message
@@ -664,12 +1024,17 @@ const createFaqButtons = () => {
           if (event.key === "Enter") {
               event.preventDefault();
               sendChatBtn.click();
-          }
-      });
-  }
+              handleChat();
+            }
+          });
+        
+          // Initial resize in case there's text already (e.g., loading saved drafts)
+          resizeTextarea();
+        };
 
   // Function to toggle the chat window and initialize chatbot
   chatbotToggler.addEventListener('click', function() {
+    
     // If the chatbot is not initialized yet, initialize it
     if (!chatbot.classList.contains('initialized')) {
       initializeChatbot();
@@ -711,7 +1076,7 @@ const createFaqButtons = () => {
                   chatbox.appendChild(createChatLi(`Article Title: ${article.title}`, "incoming"));
                   chatbox.appendChild(createChatLi(`Article Author: ${article.author}`, "incoming"));
                   chatbox.appendChild(createChatLi(`Article Content: ${article.content.substring(0, 300)}...`, "incoming"));
-                  chatbox.scrollTop = chatbox.scrollHeight;
+                  scrollToBottomOfChat();
               }
           })
           .catch(error => console.error('Error fetching article:', error));

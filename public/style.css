@@ -26,7 +26,15 @@ body {
   cursor: pointer;
   background: #084c9c;
   border-radius: 50%;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease; /* Ensure smooth transitions */
 }
+
+.chatbot-toggler:hover {
+  background-color: #062e5b; /* Darker shade when hovered */
+  box-shadow: inset 0 3px 5px rgba(0,0,0,0.2); /* Simulate an indented effect */
+  transform: translateY(2px); /* Optional: slight move to simulate pressing */
+}
+
 
 .chatbot-toggler span {
   position: absolute;
@@ -41,27 +49,28 @@ body {
   opacity: 1;
 }
 
-
-
 .chatbot {
   position: fixed;
   right: 40px;
   width: 370px;
   bottom: 100px; /* Adjusted value */
-  transform: scale(0.5);
+  transform: scale(0); /* Start fully scaled down */
   opacity: 0;
   pointer-events: none;
   background: #fff;
   overflow: hidden;
   border-radius: 5px;
   box-shadow: 0 0 128px 0 rgba(0, 0, 0, 0.1), 0 32px 64px -48px rgba(0, 0, 0, 0.5);
+  transition: transform 0.5s ease, opacity 0.5s ease; 
+  transform-origin: right bottom; /* Set transform origin to the bottom right */
 }
 
 .show-chatbot .chatbot {
-  transform: scale(1);
+  transform: scale(1); /* Scale up to normal size */
   opacity: 1;
   pointer-events: auto;
 }
+
 
 .chatbot header {
   background: #084c9c;
@@ -121,6 +130,25 @@ body {
   white-space: normal; /* Allows the text to wrap as needed */
 }
 
+/* Styles the scrollbar track (part the thumb slides within) */
+.chatbot .chatbox::-webkit-scrollbar-track {
+  background-color: #f1f1f1; /* Light gray background on the track */
+  border-radius: 10px; /* Rounded corners on the track */
+}
+
+/* Styles the scrollbar thumb (the part that's draggable) */
+.chatbot .chatbox::-webkit-scrollbar-thumb {
+  background-color: #888; /* Darker color for the thumb */
+  border-radius: 10px; /* Rounded corners on the thumb */
+}
+
+/* Styles the scrollbar itself (width, etc.) */
+.chatbot .chatbox::-webkit-scrollbar {
+  width: 8px; /* Narrower width for the scrollbar */
+  padding-right: 5px; /* Padding on the right, creates space between scrollbar and text */
+}
+
+
 .chatbot .chat {
   display: flex;
 }
@@ -159,6 +187,10 @@ body {
   margin: 5px;
 }
 
+.chatbox-spacer {
+  height: 85px; /* The height should match the height of your .chat-input area including any padding */
+}
+
 .chatbox .outgoing {
   justify-content: flex-end;
 }
@@ -169,34 +201,80 @@ body {
   border-radius: 10px 10px 10px;
 }
 
-.chatbot .chat-input {
-  bottom: 0;
-  width: 100%;
+.chat-input {
+  position: absolute;
+  bottom: 0; /* Keeps the chat input at the bottom */
+  height: fit-content;
+  left: 0; /* Aligns the chat input to the left */
+  right: 0; /* Aligns the chat input to the right */
   display: flex;
-  gap: 5px;
-  background: #fff;
-  padding: 5px 20px;
-  border-top: 1px solid #ccc;
+  padding: 10px 15px; /* Provides padding around the elements */
+  background: #fff; /* A clean, white background for the input area */
+  border-top: 2px solid #d2d2d2; /* A subtle border at the top for separation */
+  align-items: center; /* Aligns items vertically center */
 }
 
+.letter-counter {
+  position: absolute;
+  bottom: 15px; /* Initial position from the bottom */
+  right: 87px; /* Aligned with the padding of the textarea */
+  background-color: transparent;
+  color: #333; 
+  font-size: 0.8rem;
+  border-radius: 4px;
+  transition: bottom 0.3s ease; /* Smooth transition for the 'bottom' property */
+}
+
+.textarea-container {
+  flex-grow: 1;
+  transition: padding-bottom 0.3s ease; /* Transition for padding to give space for the warning */
+}
+
+
 .chat-input textarea {
-  height: 55px;
-  width: 100%;
-  border: none;
-  outline: none;
-  font-size: 0.95rem;
-  resize: none;
-  padding: 16px 15px 16px 0;
+  width: calc(100% - 6px); /* Adjust based on the width of the send button */
+  flex-grow: 1; /* Allows textarea to take up available space */
+  border: 2px solid #d2d2d2; /* Adds a subtle border around the textarea */
+  border-radius: 5px; /* Rounded corners similar to the chatbot window */
+  padding: 20px 20px; /* Adjust padding for a slimmer look */
+  height: fit-content; /* Adjust height to make the textarea slimmer */
+  resize: none; /* Prevents resizing to maintain layout integrity */
+  font-size: 1rem; /* Sets a readable default font size */
+  overflow-y: hidden; /* Enable vertical scrollbar when content exceeds the height */
+  outline: none; /* Removes the default focus outline */
+  transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out; /* Smooth transition for border color and box shadow */
+  background: #f9f9f9; /* Slightly off-white background for focus effect */
+  color: #333; /* Darker text for better readability */
+  margin-right: 6px; /* Space between textarea and send button */
+}
+
+.chat-input textarea:focus {
+  border-color: #084c9c; /* Changes border color on focus for better visibility */
+  box-shadow: 0 0 8px rgba(8, 76, 156, 0.6); /* Reintroduce the blue glow effect */
 }
 
 .chat-input span {
-  align-self: flex-end;
-  height: 45px;
-  color: #084c9c;
-  font-size: 1.35rem;
+  padding: 6px 12px;
+  background-color: #084c9c; /* Matching the chatbot theme color */
+  color: white;
+  font-size: 1.5rem; /* Slightly larger icon size for clarity */
+  border-radius: 5px; /* Rounded corners similar to the chatbot window */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  visibility: hidden;
+  transition: background-color 0.3s, transform 0.2s; /* Smooth transitions for hover and click */
+  margin-left: 10px; /* Extra space to move the button a little to the right */
 }
+
+.chat-input span:hover {
+  background-color: #062e5b; /* Darker shade on hover for feedback */
+}
+
+.chat-input span:active {
+  transform: scale(0.95); /* Subtle click effect */
+}
+
 
 .chat-input textarea:valid~span {
   visibility: visible;
@@ -218,6 +296,34 @@ body {
 
 .chatbot header span {
   display: block;
+}
+
+.warning {
+  color: red;
+  font-size: 0.9rem;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  visibility: hidden;
+}
+
+/* This class will be toggled by JavaScript */
+.warning.visible {
+  max-height: 50px; /* Adjust based on the actual height needed */
+  opacity: 1;
+  visibility: visible;
+  transition: max-height 0.3s ease, opacity 0.3s ease 0s; /* Opacity starts transitioning immediately after max-height */
+}
+
+.error-icon {
+  font-size: 0.9rem !important;  /* Ensures the icon is the same size as the text */
+  vertical-align: middle !important; /* Aligns the icon vertically with the text */
+  padding: 0 !important;         /* Removes any padding that might be inherited */
+  background: none !important;   /* Ensures no background is applied */
+  border: none !important;       /* Removes any borders */
+  cursor: default !important;    /* Ensures the cursor does not change to pointer */
+  transform: translateY(0px) !important; /* Force GPU acceleration and stabilize layout */
+  backface-visibility: hidden !important; /* Improve text rendering stability */
 }
 
 /* Add this to your CSS file for the typing animation */
@@ -267,7 +373,7 @@ body {
 .faq-button {
   margin: 3px 0; /* Provide 3px vertical spacing between buttons */
   width: calc(100% - 100px); /* Reduced width by additional 10px on each side */
-  padding: 10px 20px; /* 10px vertical padding and 20px horizontal padding */
+  padding: 10px 30px 10px 20px; /* 10px top and bottom padding, 20px left padding, 30px right padding */
   font-size: 0.9rem; /* Font size adjusted */
   background-color: #084c9c; /* Button color */
   color: white; /* Text color */
