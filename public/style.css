@@ -208,7 +208,7 @@ body {
   left: 0; /* Aligns the chat input to the left */
   right: 0; /* Aligns the chat input to the right */
   display: flex;
-  padding: 10px 15px; /* Provides padding around the elements */
+  padding: 0px 15px; /* Provides padding around the elements */
   background: #fff; /* A clean, white background for the input area */
   border-top: 2px solid #d2d2d2; /* A subtle border at the top for separation */
   align-items: center; /* Aligns items vertically center */
@@ -222,10 +222,16 @@ body {
   color: #333; 
   font-size: 0.8rem;
   border-radius: 4px;
-  transition: bottom 0.3s ease; /* Smooth transition for the 'bottom' property */
+}
+
+.letter-counter.active {
+  transform: translateY(-20px); /* Shifts the counter up when active */
+  transition: transform 0.3s ease; /* Smooth transition */
 }
 
 .textarea-container {
+  padding-top: 10px;
+  padding-bottom: 7px;
   flex-grow: 1;
   transition: padding-bottom 0.3s ease; /* Transition for padding to give space for the warning */
 }
@@ -309,7 +315,7 @@ body {
 
 /* This class will be toggled by JavaScript */
 .warning.visible {
-  max-height: 50px; /* Adjust based on the actual height needed */
+  max-height: 20px; /* Adjust based on the actual height needed */
   opacity: 1;
   visibility: visible;
   transition: max-height 0.3s ease, opacity 0.3s ease 0s; /* Opacity starts transitioning immediately after max-height */

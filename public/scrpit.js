@@ -82,7 +82,6 @@ function hideTypingAnimation() {
     }
 }
 
-
 const formatArticleMessage = (article) => {
     // Determine how many characters you want to show in the summary
     const summaryCharacterLimit = 100;
@@ -349,7 +348,6 @@ document.addEventListener('DOMContentLoaded', function () {
         // Do not change the height - let it stay as is
       }
     }
-    
 
     // Event Listener for resizing textarea
     document.querySelector(".chat-input textarea").addEventListener('input', resizeTextarea);
@@ -357,28 +355,28 @@ document.addEventListener('DOMContentLoaded', function () {
       // Call the function to limit text input
     limitTextInput();
         // Add letter counter near the textarea
-       const letterCount = document.querySelector(".chat-input textarea");
-       const counter = document.createElement('div');
-       const warningMessage = document.querySelector("#warning-message");
-
-       counter.classList.add('letter-counter');
-       letterCount.parentNode.insertBefore(counter, letterCount.nextSibling);
-       counter.textContent = '0/100'; // Initial counter value
-        
-       letterCount.addEventListener('input', function() {
-        counter.textContent = `${this.value.length}/100`; // Update counter on input
-        if (this.value.length > 100) {
-          this.value = this.value.slice(0, 100); // Ensure the limit is enforced
-        }
-        // Toggle warning message and adjust container padding when user reaches 100 characters
-        if (this.value.length === 100) {
-          warningMessage.classList.add('visible');
-          textareaContainer.style.paddingBottom = '20px'; // Increase padding to make space for the warning
-        } else {
-          warningMessage.classList.remove('visible');
-          textareaContainer.style.paddingBottom = '0px'; // Reset padding
-        }
-      });
+        const textArea = document.querySelector(".chat-input textarea");
+        const counter = document.createElement('div');
+        const warningMessage = document.querySelector("#warning-message");
+ 
+        counter.classList.add('letter-counter');
+        textArea.parentNode.insertBefore(counter, textArea.nextSibling);
+        counter.textContent = '0/100'; // Initial counter value
+         
+        textArea.addEventListener('input', function() {
+         counter.textContent = `${this.value.length}/100`; // Update counter on input
+         if (this.value.length > 100) {
+           this.value = this.value.slice(0, 100); // Ensure the limit is enforced
+         }
+         // Toggle warning message and adjust container padding when user reaches 100 characters
+         if (this.value.length === 100) {
+           warningMessage.classList.add('visible');      
+           counter.classList.add('active'); // Apply the transformation
+         } else {
+           warningMessage.classList.remove('visible');
+           counter.classList.remove('active'); // Apply the transformation
+         }
+       });
 
     // Start with the thinking animation
     showTypingAnimation();
@@ -1013,7 +1011,6 @@ const createFaqButtons = () => {
           generateResponse(userMessage); // Send user message to the server and handle response
           chatInput.value = ''; // Clear input field after sending
           resizeTextarea();  // Reset textarea height after clearing
-          letterCount.value = ''; // Clear the textarea
           counter.textContent = '0/100'; // Reset the counter
           warningMessage.classList.remove('visible');
       }
