@@ -172,45 +172,6 @@ app.get('/Articles/:id', async (req, res) => {
   }
 });
 
-app.get('/articlesInSeries/:id', async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    const { data: currentArticle, error: currentError } = await supabase
-      .from('Articles')
-      .select('series')
-      .eq('id', id)
-      .single();
-
-    if (currentError || !currentArticle) {
-      throw new Error(currentError || "Current article not found.");
-    }
-
-    const { data: seriesArticles, error: seriesError } = await supabase
-      .from('Articles')
-      .select('title, author, content, id')
-      .eq('series', currentArticle.series)
-      .not('id', 'eq', id);
-
-    if (seriesError) {
-      throw new Error(seriesError);
-    }
-
-    // Update chat history for each related article
-    seriesArticles.forEach(article => {
-      chatHistory.push({
-        role: 'system',
-        content: `Article Title: ${article.title}, Article Content: ${article.content.substring(0, 300)}...` // Adjust content length as needed
-      });
-    });
-
-    res.json(seriesArticles);
-  } catch (error) {
-    console.error('Error fetching articles in series:', error.message);
-    res.status(500).send('Error fetching articles in series');
-  }
-});
-
 // Endpoint to get Articles by category from Supabase
 app.get('/Articles/:category', async (req, res) => {
   const { category } = req.params;
@@ -467,7 +428,7 @@ app.get('/summarizeArticle/:id', async (req, res) => {
   // Prepare prompt for GPT-3-turbo
   const prompt = 
   
-  `Write an ULTRA-SHORT summary in norwegian about this article in ONLY THREE bullet points that are SEPERATED WITH PARAGRAPHS: \n\n${article.content}`;
+  `Write an ULTRA-SHORT summary in norwegian about this article in ONLY THREE bullet points that are SEPERATED WITH PARAGRAPHS using the symbol •: \n\n${article.content}`;
 
   try {
     const openAIResponse = await openai.createChatCompletion({
