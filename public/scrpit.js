@@ -3,28 +3,31 @@ let selectedCategory = null;
 
 // Define the showTypingAnimation function
 function showTypingAnimation() {
-  const chatbox = document.querySelector(".chatbox")
-  const typingLi = document.createElement('li');
-  typingLi.classList.add('chat', 'incoming');
-  typingLi.id = 'typing-animation';
+  const chatbox = document.querySelector(".chatbox");
+  // Check if the typing animation is already being shown
+  if (!chatbox.querySelector("#typing-animation")) {
+    const typingLi = document.createElement('li');
+    typingLi.classList.add('chat', 'incoming');
+    typingLi.id = 'typing-animation';
 
-  const icon = document.createElement("span");
-  icon.classList.add("material-symbols-outlined");
-  icon.textContent = "smart_toy";
-  typingLi.appendChild(icon);
+    const icon = document.createElement("span");
+    icon.classList.add("material-symbols-outlined");
+    icon.textContent = "smart_toy";
+    typingLi.appendChild(icon);
 
-  const typingAnimationContainer = document.createElement('div');
-  typingAnimationContainer.classList.add('typing-animation');
+    const typingAnimationContainer = document.createElement('div');
+    typingAnimationContainer.classList.add('typing-animation');
 
-  for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 3; i++) {
       const dot = document.createElement('div');
       dot.classList.add('typing-dot');
       typingAnimationContainer.appendChild(dot);
-  }
+    }
 
-  typingLi.appendChild(typingAnimationContainer);
-  chatbox.appendChild(typingLi);
-  scrollToBottomOfChat();
+    typingLi.appendChild(typingAnimationContainer);
+    chatbox.appendChild(typingLi);
+    scrollToBottomOfChat();
+  }
 }
 
 // Define the hideTypingAnimation function
@@ -324,6 +327,66 @@ document.addEventListener('DOMContentLoaded', function () {
       }).finally(hideTypingAnimation);
   }
 
+  function summarizeBackstory(articleId) {
+    const chatbox = document.querySelector(".chatbox");
+    showTypingAnimation(); // Start typing animation
+  
+    // Fetch all articles in the series
+    fetch(`http://localhost:3000/articlesInSeries/${articleId}`)
+      .then(response => response.json())
+      .then(articles => {
+        if (articles && articles.length > 0) {
+          // Collect all articles content
+          const contents = articles.map(article => article.content).join('\n\n');
+          // Send the combined contents to the summarization endpoint
+          return fetch('http://localhost:3000/summarizeMultipleArticlesBackstory', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ contents }), // Send the combined contents as JSON
+          }).then(res => res.json());
+        } else {
+          throw new Error("Ingen relaterte artikler funnet.");
+        }
+      })
+      .then(summaryData => {
+        // Hide initial typing animation
+        hideTypingAnimation();
+  
+        // Introductory message
+        const introMessage = "Her er bakgrunnen til saken, kort forklart:😊";
+        const introLi = createChatLi(introMessage, "incoming");
+        chatbox.appendChild(introLi);
+        scrollToBottomOfChat();
+  
+        // Show typing animation again for the summary
+        showTypingAnimation();
+  
+        // Introduce a slight delay before displaying the summary
+        setTimeout(() => {
+          hideTypingAnimation(); // Hide typing animation before displaying summary
+  
+          // Display the combined summary
+          const summaryLi = createChatLi(summaryData.summary, "incoming");
+          chatbox.appendChild(summaryLi);
+          scrollToBottomOfChat();
+        }, 1000); // Delay can be adjusted as needed
+  
+      })
+      .catch(error => {
+        console.error('Error fetching or summarizing backstory articles:', error);
+        hideTypingAnimation();
+        const errorMessage = `Beklager, det oppstod en feil: ${error.message}`;
+        const errorLi = createChatLi(errorMessage, "incoming");
+        chatbox.appendChild(errorLi);
+        scrollToBottomOfChat();
+      });
+  }
+  
+  
+
+
   //Function to initialize Chatbot
   function initializeChatbot() {
     const articleId = getArticleIdFromUrl();
@@ -482,8 +545,9 @@ const createFaqButtons = () => {
     const articleButtons = [
       { text: "Oppsummer artikkel", pattern: "summarize article" },
       { text: "Lignende artikler", pattern: "similar articles", id: articleId },
-      { text: "Kontekst til artikkel", pattern: "context", id: articleId  }
-    ];
+      { text: "Artikler i samme serie", pattern: "context", id: articleId },
+      { text: "Bakgrunn kort forklart", pattern: "show backstory", id: articleId } // New button for backstory
+    ];  
 
     const buttonsContainer = document.createElement('div');
     buttonsContainer.classList.add('faq-buttons-container');
@@ -502,6 +566,9 @@ const createFaqButtons = () => {
       }
       else if (btn.pattern === "context") {
         button.onclick = () => {fetchContextArticles(btn.id)};
+      }
+      else if (btn.pattern === "show backstory") {
+        button.onclick = () => {summarizeBackstory(btn.id)};
       }
       button.setAttribute('data-pattern', btn.pattern);
       button.textContent = btn.text;
@@ -1078,21 +1145,29 @@ const createFaqButtons = () => {
     
     function updateChatbotForArticle(articleId) {
       fetch(`http://localhost:3000/Articles/${articleId}`)
-          .then(response => response.json())
-          .then(article => {
-              if (article) {
-                  // Updating the chatbot state
-                  const chatbox = document.querySelector(".chatbox");
-                  chatbox.appendChild(createChatLi(`Article Title: ${article.title}`, "incoming"));
-                  chatbox.appendChild(createChatLi(`Article Author: ${article.author}`, "incoming"));
-                  chatbox.appendChild(createChatLi(`Article Content: ${article.content.substring(0, 300)}...`, "incoming"));
-                  scrollToBottomOfChat();
-              }
-          })
-          .catch(error => console.error('Error fetching article:', error));
+        .then(response => response.json())
+        .then(article => {
+          const chatbox = document.querySelector(".chatbox");
+          chatbox.appendChild(createChatLi(`Article Title: ${article.title}`, "incoming"));
+          chatbox.appendChild(createChatLi(`Article Author: ${article.author}`, "incoming"));
+          chatbox.appendChild(createChatLi(`Article Content: ${article.content.substring(0, 300)}...`, "incoming"));
+          scrollToBottomOfChat();
+    
+          // Fetch and display articles in the same series
+          fetch(`http://localhost:3000/articlesInSeries/${articleId}`)
+            .then(response => response.json())
+            .then(seriesArticles => {
+              seriesArticles.forEach((seriesArticle) => {
+                chatbox.appendChild(createChatLi(`Backstory to the article title: ${seriesArticle.title}`, "incoming"));
+                chatbox.appendChild(createChatLi(`Backstory to the article: ${seriesArticle.content.substring(0, 300)}...`, "incoming"));
+                scrollToBottomOfChat();
+              });
+            })
+            .catch(error => console.error('Error fetching series articles:', error));
+        })
+        .catch(error => console.error('Error fetching article:', error));
     }
     
-  
   // Listen for click events on your navigation links/buttons
   document.addEventListener('click', function(event) {
     if (event.target.matches('.nav-link')) { // Replace with your actual selector

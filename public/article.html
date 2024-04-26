@@ -1,44 +1,59 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="auto">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
+    <title>Chatbot for SMP</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="articlestyle.css"> <!-- Include specific article styles -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Article Page</title>
-    <link rel="stylesheet" href="style.css"> <!-- Assuming you have a CSS file for styles -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0" />
-    <link rel="stylesheet" href="articlestyle.css">
-    <script src="article.js"></script> <!-- Your JavaScript file -->
-    <script src="scrpit.js" defer></script>
+    <script src="article.js" defer></script> <!-- Include specific article JavaScript -->
+    <script src="scrpit.js" defer></script> <!-- Correct typo to 'script.js' if it's a mistake -->
 </head>
 <body>
-  <div id="header-placeholder"></div>
-  <div class="article-container">
-    <h1 id="article-title">Article Title</h1>
-    <h3 id="article-author">Author Name</h3>
-    <p id="article-category">Category</p>
-    
-    <p id="article-content">This is where the article content will go.</p>
-</div>
-<button class="chatbot-toggler">
-  <span class="material-symbols-outlined">mode_comment</span>
-  <span class="material-symbols-outlined">close</span>
-</button>
 
-<div id="chatbot" class="chatbot">
-<header>
-  <h2>Chatbot</h2>
-   <!--     <span class="material-symbols-outlined" id="chatbot-close">close</span> -->
-  </header>
-  <ul class="chatbox">
-      <li class="chat incoming">
-      </li>
-  </ul>
-  
-  <div class="chatbox-spacer"></div>
-  <div class="chat-input">
-      <textarea placeholder="Skriv her..." required></textarea>
-      <span id="send-btn" class="material-symbols-outlined">send</span>
-  </div>
-</div>
+    <div id="typing" class="chat incoming hidden">
+      <div class="typing-dots">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+    </div>
+    
+    <div id="header-placeholder"></div>
+    <div id="main-content">
+        <div class="article-container">
+            <h1 id="article-title">Article Title</h1>
+            <h3 id="article-author">Author Name</h3>
+            <p id="article-category">Category</p>
+            <p id="article-content">This is where the article content will go.</p>
+        </div>
+    </div>
+
+    <button class="chatbot-toggler">
+        <span class="material-symbols-outlined">mode_comment</span>
+        <span class="material-symbols-outlined">close</span>
+    </button>
+
+    <div id="chatbot" class="chatbot">
+      <header>
+        <h2>Chatbot</h2>
+      </header>
+      <ul class="chatbox">
+          <li class="chat incoming">
+          </li>
+      </ul>
+      
+      <div class="chatbox-spacer"></div>
+      <div class="chat-input">
+        <div class="textarea-container">
+            <textarea placeholder="Skriv her..." required></textarea>
+            <div id="warning-message" class="warning hidden">
+                <i class="error-icon material-symbols-outlined">error</i> Maksimalt antall tegn er 100
+            </div>
+        </div>
+        <span id="send-btn" class="material-symbols-outlined">send</span>
+      </div>      
+    </div>
 </body>
 </html>

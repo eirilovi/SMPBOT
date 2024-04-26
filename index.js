@@ -172,7 +172,44 @@ app.get('/Articles/:id', async (req, res) => {
   }
 });
 
+app.get('/articlesInSeries/:id', async (req, res) => {
+  const { id } = req.params;
 
+  try {
+    const { data: currentArticle, error: currentError } = await supabase
+      .from('Articles')
+      .select('series')
+      .eq('id', id)
+      .single();
+
+    if (currentError || !currentArticle) {
+      throw new Error(currentError || "Current article not found.");
+    }
+
+    const { data: seriesArticles, error: seriesError } = await supabase
+      .from('Articles')
+      .select('title, author, content, id')
+      .eq('series', currentArticle.series)
+      .not('id', 'eq', id);
+
+    if (seriesError) {
+      throw new Error(seriesError);
+    }
+
+    // Update chat history for each related article
+    seriesArticles.forEach(article => {
+      chatHistory.push({
+        role: 'system',
+        content: `Article Title: ${article.title}, Article Content: ${article.content.substring(0, 300)}...` // Adjust content length as needed
+      });
+    });
+
+    res.json(seriesArticles);
+  } catch (error) {
+    console.error('Error fetching articles in series:', error.message);
+    res.status(500).send('Error fetching articles in series');
+  }
+});
 
 // Endpoint to get Articles by category from Supabase
 app.get('/Articles/:category', async (req, res) => {
@@ -446,6 +483,33 @@ app.get('/summarizeArticle/:id', async (req, res) => {
     res.status(500).send('Error summarizing article');
   }
 });
+
+// Endpoint to summarize multiple articles for backstory
+app.post('/summarizeMultipleArticlesBackstory', async (req, res) => {
+  const { contents } = req.body; // 'contents' should be a string containing all articles' content concatenated together
+
+  if (!contents) {
+    return res.status(400).send('No contents provided');
+  }
+
+  // Prepare prompt for GPT-3-turbo to summarize all contents
+  const prompt = `Write an ULTRA-SHORT summary in Norwegian based on the following content, summarizing the main points into one sentence: \n\n${contents}`;
+
+  try {
+    const openAIResponse = await openai.createChatCompletion({
+      model: 'gpt-3.5-turbo',
+      messages: [{role: 'system', content: prompt}],
+      max_tokens: 300,
+    });
+
+    const summary = openAIResponse.data.choices[0].message.content.trim();
+    res.json({ summary });
+  } catch (error) {
+    console.error("Error with OpenAI:", error);
+    res.status(500).send('Error summarizing articles');
+  }
+});
+
 
 app.get('/articlesInSeries/:id', async (req, res) => {
   const { id } = req.params;
