@@ -156,23 +156,46 @@ const generateResponse = (userMessage) => {
                       yesButton.textContent = "Ja";
                       yesButton.classList.add('confirm-button');
                       yesButton.onclick = () => {
-                        processArticles(item.articles, 0, chatbox);
+                          processArticles(item.articles, 0, chatbox);
                       };
-
+                    
                       const noButton = document.createElement('button');
                       noButton.textContent = "Nei";
                       noButton.classList.add('confirm-button');
                       noButton.onclick = () => {
-                        const noResponse = createChatLi("Den er grei! Er det noe annet du lurer på? 😊", "incoming");
-                        chatbox.appendChild(noResponse);
-                        scrollToBottomOfChat();
-                      };
-
+                          showTypingAnimation(); // Show typing animation
+                          setTimeout(() => { // Set timeout to simulate delay
+                              fetch('/askOpenAIForResponse', {
+                                  method: 'POST',
+                                  headers: {
+                                      'Content-Type': 'application/json',
+                                  },
+                                  body: JSON.stringify({ message: userMessage }), // Send the user message to the server
+                              })
+                              .then(response => response.json())
+                              .then(data => {
+                                  hideTypingAnimation(); // Hide typing animation after response is received
+                                  const responseData = data.response[0]; // Access the first item in the response array
+                                  if (responseData && responseData.type === 'text') {
+                                      chatbox.appendChild(createChatLi(responseData.content, "incoming")); // Append responseData.content
+                                  } else {
+                                      console.error('Unexpected response:', data);
+                                  }
+                                  scrollToBottomOfChat();
+                              })
+                              .catch(error => {
+                                  console.error('Error requesting response from GPT model:', error);
+                                  chatbox.appendChild(createChatLi("Sorry, there was an error processing your request.", "incoming"));
+                                  hideTypingAnimation();
+                              });
+                          }, 1500); // 1.5-second delay before sending request
+                      };                      
+                      
                       buttonContainer.appendChild(yesButton);
                       buttonContainer.appendChild(noButton);
                       chatbox.appendChild(buttonContainer);
                       scrollToBottomOfChat();
-                    }
+                  }
                     if (chatBubble) {
                       chatbox.appendChild(chatBubble);
                       scrollToBottomOfChat();

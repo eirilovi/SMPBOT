@@ -329,12 +329,14 @@ app.post('/ask', async (req, res) => {
           }
 
           if (articles.length > 0) {
-              response.push({
-                  type: 'confirm',
-                  content: "Jeg fant noen artikler med tags som matcher meldingen din. Ønsker du at jeg foreslår dem?😊",
-                  articles: articles
-              });
-          }
+            response.push({
+                type: 'confirm',
+                content: "Jeg fant noen artikler med tags som matcher meldingen din. Ønsker du at jeg foreslår dem?😊",
+                articles: articles
+            });
+        } else {
+                await askOpenAIForResponse(userInput);
+        }
       }
 
       // If no tags found or no specific content matched, proceed with keyword extraction and article search or OpenAI response
@@ -369,7 +371,7 @@ app.post('/ask', async (req, res) => {
   res.json({ response });
 
 
-async function askOpenAIForResponse(userInput) {
+async function askOpenAIForResponse() {
   try {
     const openAIResponse = await openai.createChatCompletion({
       model: 'gpt-3.5-turbo',
@@ -387,6 +389,33 @@ async function askOpenAIForResponse(userInput) {
     chatHistory.push({ role: 'system', content: errorMessage });
   }
 }});
+
+app.post('/askOpenAIForResponse', async (req, res) => {
+  const userInput = req.body.message;
+  chatHistory.push({ role: 'user', content: userInput }); // Log user input to chat history
+
+  let response = []; // Initialize response array
+
+  try {
+      const openAIResponse = await openai.createChatCompletion({
+          model: 'gpt-3.5-turbo',
+          messages: chatHistory,
+          max_tokens: 300,
+      });
+      let responseText = openAIResponse.data.choices[0].message.content.trim();
+      response.push({ type: 'text', content: responseText });
+      chatHistory.push({ role: 'system', content: responseText });
+  } catch (error) {
+      console.error("Error with OpenAI:", error);
+      let errorMessage = "Sorry, I encountered an error processing your request.";
+      response.push({ type: 'text', content: errorMessage });
+      chatHistory.push({ role: 'system', content: errorMessage });
+  }
+
+  // Send the response array back to the frontend
+  res.json({ response });
+});
+
 
 async function findTagsInMessage(userInput) {
   const allTags = await getAllTags(); // Fetch all tags from your database
