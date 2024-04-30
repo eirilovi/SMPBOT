@@ -83,6 +83,13 @@ body {
   font-size: 1.4rem;
 }
 
+.close-icon {
+  position: absolute;
+  top: 16px !important; /* Adjust the value to move the icon up */
+  right: 5px !important; /* Adjust the value to move the icon to the right */
+  font-size: 30px !important;
+}
+
 
 .article-message {
   background-color: #c2c2c2;
@@ -329,6 +336,23 @@ body {
   cursor: default !important;    /* Ensures the cursor does not change to pointer */
   transform: translateY(0px) !important; /* Force GPU acceleration and stabilize layout */
   backface-visibility: hidden !important; /* Improve text rendering stability */
+}
+
+.scroll-to-top-btn {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  font-size: 30px !important;
+  background-color: transparent;
+  color: #fff; /* Adjust for visibility on the header background */
+  border: none;
+  cursor: pointer;
+  display: none; /* Hidden by default */
+  z-index: 10; /* Ensure it's above other content */
+}
+
+.scroll-to-top-btn:hover {
+  color: #ececec; /* Lighter color when hovered */
 }
 
 /* Add this to your CSS file for the typing animation */
