@@ -4,6 +4,16 @@ let selectedCategory = null;
 // Define the showTypingAnimation function
 function showTypingAnimation() {
   const chatbox = document.querySelector(".chatbox");
+  const chatInput = document.querySelector(".chat-input textarea");
+  const specificButtons = document.querySelectorAll(".faq-button, .option-button, .category-button"); // Select specific buttons
+
+  // Disable the chat input area and specific buttons
+  chatInput.disabled = true;
+  specificButtons.forEach(button => {
+    button.disabled = true;  // Disable the button
+    button.classList.add('disabled');  // Add a 'disabled' class for styling
+  });
+
   // Check if the typing animation is already being shown
   if (!chatbox.querySelector("#typing-animation")) {
     const typingLi = document.createElement('li');
@@ -33,10 +43,21 @@ function showTypingAnimation() {
 // Define the hideTypingAnimation function
 function hideTypingAnimation() {
   const typingLi = document.getElementById('typing-animation');
+  const chatInput = document.querySelector(".chat-input textarea");
+  const specificButtons = document.querySelectorAll(".faq-button, .option-button, .category-button"); // Select specific buttons
+
   if (typingLi) {
       typingLi.remove();
   }
+
+  // Re-enable the chat input area and specific buttons
+  chatInput.disabled = false;
+  specificButtons.forEach(button => {
+    button.disabled = false;  // Enable the button
+    button.classList.remove('disabled');  // Remove the 'disabled' class
+  });
 }
+
 const generateResponse = (userMessage) => {
   const userMessageLower = userMessage.toLowerCase();
   const chatbox = document.querySelector(".chatbox");
@@ -235,7 +256,7 @@ const fetchAndDisplayCategories = () => {
           showTypingAnimation();
           setTimeout(() => {
             hideTypingAnimation();
-            chatbox.appendChild(createChatLi("Dette er kategoriene", "incoming"));
+            chatbox.appendChild(createChatLi("Vennligst velg én av kategoriene: 😊", "incoming"));
             scrollToBottomOfChat();
 
             // Delay to show typing animation again before displaying the category buttons
@@ -450,7 +471,7 @@ const formatArticleMessage = (article) => {
         <div class="article-details">
             <span class="author">${article.author}</span><br>
             <br><span class="summary">${truncatedSummary}</span><br> <!-- Use truncated summary -->
-            <a href="${article.url}" target="_blank">Les her</a>
+            <a href="${article.url}" target="_blank"><strong>Les her</strong></a>
         </div>
     </div>
     `;

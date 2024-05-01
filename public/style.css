@@ -78,7 +78,7 @@ body {
   text-align: center;
 }
 
-.chatbot header h2 {
+.chatbot header h1 {
   color: #fff;
   font-size: 1.4rem;
 }
@@ -389,6 +389,11 @@ body {
   transition: background-color 0.3s;
 }
 
+button.disabled {
+  opacity: 0.8;
+  cursor: not-allowed;
+}
+
 /* Container for FAQ buttons to lay them out horizontally */
 .faq-buttons-container {
   display: flex;
@@ -409,15 +414,20 @@ body {
   border: none;
   border-radius: 4px; /* Slightly rounded corners for aesthetics */
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: background-color 0.3s, transform 0.1s; /* Add transition for transform */
   display: flex; /* Use flexbox for centering text */
   justify-content: flex-start; /* Align text to the left */
   align-items: center; /* Center text vertically */
   text-align: left; /* Align text to the left for browsers that don't support flexbox */
   position: relative; /* Needed for positioning the pseudo-element */
 }
+
 .faq-button:hover {
   background-color: #062e5b; /* Darker color on hover */
+}
+
+.faq-button:active {
+  transform: scale(0.97); /* Scale down when active */
 }
 
 /* Container for FAQ buttons to lay them out horizontally */

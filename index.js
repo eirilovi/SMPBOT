@@ -38,7 +38,7 @@ let chatHistory = [
   const subscribeRegex = /abonnent|abonement|abonner/i;
 
   if (subscribeRegex.test(userInput)) {
-    return 'Vil du bli en del av Sunnmørsposten-familien? <br> Vi har abonnementspakker for enhver smak: Digital, Komplett, Ung (under 34 år) og Helg + Digital.😊 <br> Det er enkelt å melde seg på og få tilgang til vårt eksklusive innhold. <br> <a href="https://www.smp.no/dakapo/productpage/SPO/?source=topheader_A" target="_blank">Klikk her for å bli abonnent i dag!</a>';
+    return 'Vil du bli en del av Sunnmørsposten-familien? <br> Vi har abonnementspakker for enhver smak: Digital, Komplett, Ung (under 34 år) og Helg + Digital.😊 <br> Det er enkelt å melde seg på og få tilgang til vårt eksklusive innhold. <br> <a href="https://www.smp.no/dakapo/productpage/SPO/?source=topheader_A" target="_blank"><strong>Klikk her for å bli abonnent!</strong></a>';
   
   } else
   return ""; // Return an empty string if no FAQ matches
