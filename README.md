@@ -33,7 +33,7 @@ npm start
 
 This will run the server on http://localhost:3000.
 
-Usage
+## Usage
 
 The Sunnmørsposten Chatbot offers a dual-functionality interface, serving both as a general assistant and an article-specific assistant, enriching the user's interaction with real-time data and services.
 
@@ -49,7 +49,7 @@ The Sunnmørsposten Chatbot offers a dual-functionality interface, serving both 
   - **Ask Questions About the Current Article**: Users can inquire directly in the chat about details or clarifications related to the article they are currently viewing.
   - **Article Navigation Buttons**: The bot provides buttons that allow users to summon related articles, summarize the content, and explore articles within the same series or similar themes.
 
-###Navigational and Functional Buttons
+### Navigational and Functional Buttons
 
 - **Summarize Article**: Quickly get a concise summary of the article directly in the chat interface.
 - **Find Similar Articles**: The bot can search for and display articles that are similar in content or theme to the current article.
