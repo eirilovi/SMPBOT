@@ -10,28 +10,30 @@ The Sunnmørsposten Chatbot is an interactive assistant designed to provide real
 - **Responsive Chat Interface**: A fully interactive chat interface which handles both predefined and dynamic responses.
 - **Subscription Management**: Provides information on how to manage subscriptions.
 
-## Installation
+# Installation
 
-1. **Clone the repository:**
-
+## 1. Clone the repository:
 ```bash
 git clone https://github.com/eirilovi/SMPBOT
+```
 
-## 2. Install dependencies:
+2. Install dependencies:
 npm install
 
-## 3. Set up the environment variables:
+3. Set up the environment variables:
 Create a .env file in the root directory and update it with the necessary API keys and database connection details.
 
 SUPABASE_URL=your_supabase_url
 SUPABASE_ANON_KEY=your_supabase_anonymous_key
 
-## 4. Start the server:
+
+4. Start the server:
 npm start
+
 
 This will run the server on http://localhost:3000.
 
-## Usage
+Usage
 
 The Sunnmørsposten Chatbot offers a dual-functionality interface, serving both as a general assistant and an article-specific assistant, enriching the user's interaction with real-time data and services.
 
@@ -47,7 +49,7 @@ The Sunnmørsposten Chatbot offers a dual-functionality interface, serving both 
   - **Ask Questions About the Current Article**: Users can inquire directly in the chat about details or clarifications related to the article they are currently viewing.
   - **Article Navigation Buttons**: The bot provides buttons that allow users to summon related articles, summarize the content, and explore articles within the same series or similar themes.
 
-### Navigational and Functional Buttons
+###Navigational and Functional Buttons
 
 - **Summarize Article**: Quickly get a concise summary of the article directly in the chat interface.
 - **Find Similar Articles**: The bot can search for and display articles that are similar in content or theme to the current article.
