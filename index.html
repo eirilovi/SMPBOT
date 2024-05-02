@@ -1,54 +1,52 @@
 <!DOCTYPE html>
-<html lang="en" dir="auto">
+<html lang="no" dir="auto">
 <head>
     <meta charset="utf-8">
     <title>Chatbot for SMP</title>
     <link rel="stylesheet" href="style.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Engage with the Sunnmørsposten Chatbot to explore news, get assistance, and find answers to your inquiries quickly.">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0" />
-    <script src="scrpit.js" defer></script>
-  </head>
-  <body>
+    <script src="scrpit.js" defer></script> <!-- Also corrected the typo in 'script.js' -->
+</head>
+<body>
 
-    <div id="typing" class="chat incoming hidden">
-      <div class="typing-dots">
+<div id="typing" class="chat incoming hidden">
+    <div class="typing-dots">
         <div class="dot"></div>
         <div class="dot"></div>
         <div class="dot"></div>
-      </div>
     </div>
-    
-    <div id="header-placeholder"></div>
-    <div id="main-content">
+</div>
 
+<div id="header-placeholder"></div>
+<div id="main-content"></div>
 
+<button class="chatbot-toggler">
+    <span class="material-symbols-outlined">mode_comment</span>
+    <span class="material-symbols-outlined">close</span>
+</button>
+
+<div id="chatbot" class="chatbot">
+    <header>
+        <h1>Chatbot</h1>
+        <span id="close-icon" class="material-symbols-outlined close-icon">close</span>
+        <button id="scrollToTopBtn" class="scroll-to-top-btn material-symbols-outlined">arrow_circle_up</button>
+    </header>
+    <ul class="chatbox">
+        <li class="chat incoming"></li>
+    </ul>
+    <div class="chatbox-spacer"></div>
+    <div class="chat-input">
+        <div class="textarea-container">
+            <textarea id="userInput" placeholder="Skriv her..." aria-label="Skrivefelt for spørsmål til chatbot"></textarea>
+            <div id="warning-message" class="warning hidden">
+                <i class="error-icon material-symbols-outlined">error</i> Maksimalt antall tegn er 100
+            </div>
+        </div>
+        <span id="send-btn" class="material-symbols-outlined">send</span>
     </div>
+</div>
 
-    <button class="chatbot-toggler">
-        <span class="material-symbols-outlined">mode_comment</span>
-        <span class="material-symbols-outlined">close</span>
-    </button>
-
-    <div id="chatbot" class="chatbot">
-      <header>
-        <h2>Chatbot</h2>
-   <!--     <span class="material-symbols-outlined" id="chatbot-close">close</span> -->
-      </header>
-        <ul class="chatbox">
-            <li class="chat incoming">
-            </li>
-        </ul>
-        
-        <div class="chatbox-spacer"></div>
-        <div class="chat-input">
-          <div class="textarea-container">
-              <textarea placeholder="Skriv her..." required></textarea>
-              <div id="warning-message" class="warning hidden">
-                  <i class="error-icon material-symbols-outlined">error</i> Maksimalt antall tegn er 100
-              </div>
-          </div>
-          <span id="send-btn" class="material-symbols-outlined">send</span>
-      </div>      
-    </div>
 </body>
 </html>

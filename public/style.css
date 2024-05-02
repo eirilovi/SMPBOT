@@ -78,9 +78,16 @@ body {
   text-align: center;
 }
 
-.chatbot header h2 {
+.chatbot header h1 {
   color: #fff;
   font-size: 1.4rem;
+}
+
+.close-icon {
+  position: absolute;
+  top: 16px !important; /* Adjust the value to move the icon up */
+  right: 5px !important; /* Adjust the value to move the icon to the right */
+  font-size: 30px !important;
 }
 
 
@@ -331,6 +338,23 @@ body {
   backface-visibility: hidden !important; /* Improve text rendering stability */
 }
 
+.scroll-to-top-btn {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  font-size: 30px !important;
+  background-color: transparent;
+  color: #fff; /* Adjust for visibility on the header background */
+  border: none;
+  cursor: pointer;
+  display: none; /* Hidden by default */
+  z-index: 10; /* Ensure it's above other content */
+}
+
+.scroll-to-top-btn:hover {
+  color: #ececec; /* Lighter color when hovered */
+}
+
 /* Add this to your CSS file for the typing animation */
 .typing-animation {
   display: flex;
@@ -365,6 +389,11 @@ body {
   transition: background-color 0.3s;
 }
 
+button.disabled {
+  opacity: 0.8;
+  cursor: not-allowed;
+}
+
 /* Container for FAQ buttons to lay them out horizontally */
 .faq-buttons-container {
   display: flex;
@@ -385,15 +414,20 @@ body {
   border: none;
   border-radius: 4px; /* Slightly rounded corners for aesthetics */
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: background-color 0.3s, transform 0.1s; /* Add transition for transform */
   display: flex; /* Use flexbox for centering text */
   justify-content: flex-start; /* Align text to the left */
   align-items: center; /* Center text vertically */
   text-align: left; /* Align text to the left for browsers that don't support flexbox */
   position: relative; /* Needed for positioning the pseudo-element */
 }
+
 .faq-button:hover {
   background-color: #062e5b; /* Darker color on hover */
+}
+
+.faq-button:active {
+  transform: scale(0.97); /* Scale down when active */
 }
 
 /* Container for FAQ buttons to lay them out horizontally */

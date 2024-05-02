@@ -4,6 +4,16 @@ let selectedCategory = null;
 // Define the showTypingAnimation function
 function showTypingAnimation() {
   const chatbox = document.querySelector(".chatbox");
+  const chatInput = document.querySelector(".chat-input textarea");
+  const specificButtons = document.querySelectorAll(".faq-button, .option-button, .category-button"); // Select specific buttons
+
+  // Disable the chat input area and specific buttons
+  chatInput.disabled = true;
+  specificButtons.forEach(button => {
+    button.disabled = true;  // Disable the button
+    button.classList.add('disabled');  // Add a 'disabled' class for styling
+  });
+
   // Check if the typing animation is already being shown
   if (!chatbox.querySelector("#typing-animation")) {
     const typingLi = document.createElement('li');
@@ -33,10 +43,21 @@ function showTypingAnimation() {
 // Define the hideTypingAnimation function
 function hideTypingAnimation() {
   const typingLi = document.getElementById('typing-animation');
+  const chatInput = document.querySelector(".chat-input textarea");
+  const specificButtons = document.querySelectorAll(".faq-button, .option-button, .category-button"); // Select specific buttons
+
   if (typingLi) {
       typingLi.remove();
   }
+
+  // Re-enable the chat input area and specific buttons
+  chatInput.disabled = false;
+  specificButtons.forEach(button => {
+    button.disabled = false;  // Enable the button
+    button.classList.remove('disabled');  // Remove the 'disabled' class
+  });
 }
+
 const generateResponse = (userMessage) => {
   const userMessageLower = userMessage.toLowerCase();
   const chatbox = document.querySelector(".chatbox");
@@ -57,12 +78,13 @@ const generateResponse = (userMessage) => {
         });
       }, 500);
     } else if (userMessageLower.includes("kundeservice sporsmal")) {
-      showTypingAnimation();
+      showTypingAnimation(); // Show typing animation before fetching CS buttons
       setTimeout(() => {
-        fetchCSButtons(); // Run the function to generate customer service buttons
-        hideTypingAnimation();
+          fetchCSButtons(); // Run the function to generate customer service buttons
+          hideTypingAnimation(); // Hide typing animation after fetching buttons
+          scrollToBottomOfChat(); // Ensure scroll adjustment after the intro
       }, 500);
-    } else if (userMessageLower.includes("fetch ungdom articles")) {
+  }   else if (userMessageLower.includes("fetch ungdom articles")) {
       showTypingAnimation();
       setTimeout(() => {
         const endpoint = '/articlesUngdom';
@@ -156,23 +178,46 @@ const generateResponse = (userMessage) => {
                       yesButton.textContent = "Ja";
                       yesButton.classList.add('confirm-button');
                       yesButton.onclick = () => {
-                        processArticles(item.articles, 0, chatbox);
+                          processArticles(item.articles, 0, chatbox);
                       };
-
+                    
                       const noButton = document.createElement('button');
                       noButton.textContent = "Nei";
                       noButton.classList.add('confirm-button');
                       noButton.onclick = () => {
-                        const noResponse = createChatLi("Den er grei! Er det noe annet du lurer på? 😊", "incoming");
-                        chatbox.appendChild(noResponse);
-                        scrollToBottomOfChat();
-                      };
-
+                          showTypingAnimation(); // Show typing animation
+                          setTimeout(() => { // Set timeout to simulate delay
+                              fetch('/askOpenAIForResponse', {
+                                  method: 'POST',
+                                  headers: {
+                                      'Content-Type': 'application/json',
+                                  },
+                                  body: JSON.stringify({ message: userMessage }), // Send the user message to the server
+                              })
+                              .then(response => response.json())
+                              .then(data => {
+                                  hideTypingAnimation(); // Hide typing animation after response is received
+                                  const responseData = data.response[0]; // Access the first item in the response array
+                                  if (responseData && responseData.type === 'text') {
+                                      chatbox.appendChild(createChatLi(responseData.content, "incoming")); // Append responseData.content
+                                  } else {
+                                      console.error('Unexpected response:', data);
+                                  }
+                                  scrollToBottomOfChat();
+                              })
+                              .catch(error => {
+                                  console.error('Error requesting response from GPT model:', error);
+                                  chatbox.appendChild(createChatLi("Sorry, there was an error processing your request.", "incoming"));
+                                  hideTypingAnimation();
+                              });
+                          }, 1500); // 1.5-second delay before sending request
+                      };                      
+                      
                       buttonContainer.appendChild(yesButton);
                       buttonContainer.appendChild(noButton);
                       chatbox.appendChild(buttonContainer);
                       scrollToBottomOfChat();
-                    }
+                  }
                     if (chatBubble) {
                       chatbox.appendChild(chatBubble);
                       scrollToBottomOfChat();
@@ -197,7 +242,7 @@ const generateResponse = (userMessage) => {
         });
       }, 500);
     }
-  }, 1500); // Consistent delay to simulate the typing effect initially  
+  }, 500); // Consistent delay to simulate the typing effect initially  
 };
 
 const fetchAndDisplayCategories = () => {
@@ -207,65 +252,81 @@ const fetchAndDisplayCategories = () => {
       .then(response => response.json())
       .then(categories => {
         if (categories.length) {
-          const buttonsContainer = document.createElement('div');
-          buttonsContainer.classList.add('category-buttons-container');
-          
-          categories.forEach(category => {
-            const button = document.createElement('button');
-            button.classList.add('category-button');
-            button.textContent = category;
-            button.setAttribute('data-category', category);
-            buttonsContainer.appendChild(button);
-          });
-          
-          chatbox.appendChild(createChatLi(buttonsContainer, "incoming"));
-          
-          // Attach event listeners to the category buttons
-          buttonsContainer.querySelectorAll('.category-button').forEach(button => {
-            button.addEventListener('click', function() {
-              showTypingAnimation(); // Show typing animation on category button click
-              selectedCategory = this.getAttribute('data-category');
-              setTimeout(() => { // Simulate processing time
-                chatbox.appendChild(createChatLi(`Du valgte kategori: ${selectedCategory}. Hva ønsker du jeg skal gjøre? 😊`, "incoming"));
+          // Display intro message with typing animation
+          showTypingAnimation();
+          setTimeout(() => {
+            hideTypingAnimation();
+            chatbox.appendChild(createChatLi("Vennligst velg én av kategoriene: 😊", "incoming"));
+            scrollToBottomOfChat();
 
-                const optionsContainer = document.createElement('div');
-                optionsContainer.classList.add('faq-buttons-container');
-                
-                const options = [
-                  { text: "Nyeste artikler", action: "latest" },
-                  { text: "Viktigste artikler", action: "important" },
-                  { text: "Tilfeldig artikkel", action: "random" }
-                ];
-                
-                function articleButton(selectedCategory, action) {
-                  showTypingAnimation(); // Show typing animation on option button click
-                  setTimeout(() => { // Simulate processing time for action handling
-                    handleCategoryAction(selectedCategory, action);
-                    hideTypingAnimation(); // Hide typing animation after processing
-                  }, 1500); // Adjust the timeout duration as per your requirements
-                };
+            // Delay to show typing animation again before displaying the category buttons
+            showTypingAnimation();
+            setTimeout(() => {
+              hideTypingAnimation();
+              const buttonsContainer = document.createElement('div');
+              buttonsContainer.classList.add('category-buttons-container');
+              
+              categories.forEach(category => {
+                const button = document.createElement('button');
+                button.classList.add('category-button');
+                button.textContent = category;
+                button.setAttribute('data-category', category);
+                buttonsContainer.appendChild(button);
+              });
 
-                options.forEach(opt => {
-                  const optionButton = document.createElement('button');
-                  optionButton.classList.add('option-button', 'faq-button');
-                  optionButton.textContent = opt.text;
-                  optionButton.setAttribute('data-action', opt.action);
-                  optionsContainer.appendChild(optionButton);
+              chatbox.appendChild(createChatLi(buttonsContainer, "incoming"));
+              scrollToBottomOfChat();
+              
+              // Attach event listeners to the category buttons
+              buttonsContainer.querySelectorAll('.category-button').forEach(button => {
+                button.addEventListener('click', function() {
+                  showTypingAnimation(); // Show typing animation on category button click
+                  selectedCategory = this.getAttribute('data-category');
+                  setTimeout(() => { // Simulate processing time
+                    hideTypingAnimation();
+                    chatbox.appendChild(createChatLi(`Du valgte kategori: ${selectedCategory}. Hva ønsker du jeg skal gjøre? 😊`, "incoming"));
+                    scrollToBottomOfChat();
 
-                  // Attach event listeners to each option button
-                  optionButton.onclick = () => {articleButton(selectedCategory, opt.action)}  
+                    showTypingAnimation(); // Show typing animation before displaying options
+                    setTimeout(() => {
+                      hideTypingAnimation();
+                      const optionsContainer = document.createElement('div');
+                      optionsContainer.classList.add('faq-buttons-container');
+                      
+                      const options = [
+                        { text: "Nyeste artikler", action: "latest" },
+                        { text: "Viktigste artikler", action: "important" },
+                        { text: "Tilfeldig artikkel", action: "random" }
+                      ];
+                      
+                      options.forEach(opt => {
+                        const optionButton = document.createElement('button');
+                        optionButton.classList.add('option-button', 'faq-button');
+                        optionButton.textContent = opt.text;
+                        optionButton.setAttribute('data-action', opt.action);
+                        optionsContainer.appendChild(optionButton);
+
+                        // Attach event listeners to each option button
+                        optionButton.onclick = () => {
+                          showTypingAnimation(); // Show typing animation on option button click
+                          setTimeout(() => { // Simulate processing time for action handling
+                            handleCategoryAction(selectedCategory, opt.action);
+                            hideTypingAnimation(); // Hide typing animation after processing
+                            scrollToBottomOfChat();
+                          }, 0); // Adjust the timeout duration as per your requirements
+                        };  
+                      });
+
+                      chatbox.appendChild(createChatLi(optionsContainer, "incoming"));
+                      scrollToBottomOfChat();
+                    }, 500); // Typing animation delay for options
+                  }, 500); // Delay after category selection
                 });
+              });
 
-                chatbox.appendChild(createChatLi(optionsContainer, "incoming"));
-                scrollToBottomOfChat();
-                
-                hideTypingAnimation(); // Hide typing animation after category processing
-              }, 1500); // Adjust the timeout duration as per your requirements
-            });
-          });
-
-          scrollToBottomOfChat();
-          resolve(); // Resolve the promise after categories are displayed
+              resolve(); // Resolve the promise after categories are displayed
+            }, 500); // Delay before showing category buttons to simulate typing
+          }, 500); // Delay for the intro message typing simulation
         } else {
           chatbox.appendChild(createChatLi("There are no categories available at the moment.", "incoming"));
           reject(new Error("No categories available")); // Reject the promise if no categories are found
@@ -372,6 +433,25 @@ const fetchAndDisplayCategories = () => {
     }
 }
 
+document.addEventListener('scroll', function() {
+  const scrollComponent = document.querySelector(".chatbox"); // Target the chatbox for scroll events
+  let scrollToTopBtn = document.getElementById('scrollToTopBtn');
+
+  if (scrollComponent.scrollTop > 100) {
+      scrollToTopBtn.style.display = "block";
+  } else {
+      scrollToTopBtn.style.display = "none";
+  }
+});
+
+document.getElementById('scrollToTopBtn').addEventListener('click', function() {
+  const scrollComponent = document.querySelector(".chatbox");
+  scrollComponent.scrollTo({
+      top: 0,
+      behavior: "smooth"
+  });
+});
+
 const formatArticleMessage = (article) => {
     // Determine how many characters you want to show in the summary
     const summaryCharacterLimit = 100;
@@ -391,7 +471,7 @@ const formatArticleMessage = (article) => {
         <div class="article-details">
             <span class="author">${article.author}</span><br>
             <br><span class="summary">${truncatedSummary}</span><br> <!-- Use truncated summary -->
-            <a href="${article.url}" target="_blank">Les her</a>
+            <a href="${article.url}" target="_blank"><strong>Les her</strong></a>
         </div>
     </div>
     `;
@@ -541,34 +621,44 @@ const handleCategoryAction = (category, action) => {
   // Show typing animation
   showTypingAnimation();
 
-  fetch(`http://localhost:3000${endpoint}`)
-    .then(response => response.json())
-    .then(articles => {
-      hideTypingAnimation(); // Hide typing animation once the data is loaded
+  setTimeout(() => { // Simulate a delay to fetch articles
+    fetch(`http://localhost:3000${endpoint}`)
+      .then(response => response.json())
+      .then(articles => {
+        hideTypingAnimation(); // Hide typing animation once the data is ready to load
 
-      if (articles.length === 0) {
-        chatbox.appendChild(createChatLi("There are no articles available for this selection.", "incoming"));
-      } else {
-        chatbox.appendChild(createChatLi(introMessage, "incoming"));
-
-        // If the action is 'random', process only one article
-        if (action === 'random' && articles.length > 0) {
-          // Adjust here if the random endpoint structure is different or ensure it returns an array with one article
-          processArticles(articles, 0, chatbox);
+        if (articles.length === 0) {
+          chatbox.appendChild(createChatLi("There are no articles available for this selection.", "incoming"));
         } else {
-          // Start processing articles from the first one for 'latest' and 'important'
-          processArticles(articles, 0, chatbox);
+          // Delay to show the typing animation again before displaying the intro message
+          showTypingAnimation();
+          setTimeout(() => {
+            hideTypingAnimation();
+            chatbox.appendChild(createChatLi(introMessage, "incoming"));
+            scrollToBottomOfChat();
+
+            // If the action is 'random', process only one article
+            if (action === 'random' && articles.length > 0) {
+              processArticles(articles, 0, chatbox);
+            } else {
+              // Start processing articles from the first one for 'latest' and 'important'
+              processArticles(articles, 0, chatbox);
+            }
+            scrollToBottomOfChat();
+          }, 500); // Delay to show intro message effectively
         }
-      }
-      scrollToBottomOfChat();
-    })
-    .catch(error => {
-      console.error('Error:', error);
-      hideTypingAnimation();
-      chatbox.appendChild(createChatLi("Sorry, there was an error fetching the articles.", "incoming"));
-      scrollToBottomOfChat();
-    });
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        hideTypingAnimation();
+        chatbox.appendChild(createChatLi("Sorry, there was an error fetching the articles.", "incoming"));
+        scrollToBottomOfChat();
+      });
+  }, 0); // Adjusted delay to enhance the realistic interaction delay
 };
+
+
+
 function getArticleIdFromUrl() {
   const url = new URL(window.location.href);
   const pathname = url.pathname;
@@ -730,29 +820,47 @@ function getArticleIdFromUrl() {
 
   function fetchCSButtons() {
     const chatbox = document.querySelector(".chatbox");
-    const buttonsContainer = document.createElement('div');
-    buttonsContainer.classList.add('faq-buttons-container');
+    const introMessage = "Her er kundeservicespørsmålene: 😊";
+    chatbox.appendChild(createChatLi(introMessage, "incoming"));
+    
+    // Show typing animation initially for the intro message
+    showTypingAnimation();
   
-    const csButtons = [
-      { text: "Innlogging på våre digitale produkter", pattern: "digitalLogin" },
-      { text: "Levering av papiravis", pattern: "paperDelivery" },
-      { text: "Kjøp og endring av abonnement", pattern: "subscriptionManagement" },
-      { text: "Betaling og faktura", pattern: "billingAndInvoices" },
-    ];
+    // Introduce a slight delay before hiding the typing animation of the intro message
+    setTimeout(() => {
+      hideTypingAnimation(); // Hide typing animation for the intro message
   
-    csButtons.forEach(btn => {
-      const button = document.createElement('button');
-      button.classList.add('faq-button', 'cs-button'); // Apply classes for styling
-      button.textContent = btn.text;
-      // Use a generic handler and pass the pattern to handle specific actions
-      button.onclick = () => handleCSAction(btn.pattern);
-      button.setAttribute('data-pattern', btn.pattern); // Store the pattern as an attribute
-      buttonsContainer.appendChild(button);
-    });
+      // Immediately show typing animation again for the buttons
+      showTypingAnimation();
   
-    chatbox.appendChild(createChatLi(buttonsContainer, "incoming"));
-    scrollToBottomOfChat();
+      setTimeout(() => {
+        hideTypingAnimation(); // Hide typing animation before showing buttons
+        const buttonsContainer = document.createElement('div');
+        buttonsContainer.classList.add('faq-buttons-container');
+  
+        const csButtons = [
+            { text: "Innlogging på våre digitale produkter", pattern: "digitalLogin" },
+            { text: "Levering av papiravis", pattern: "paperDelivery" },
+            { text: "Kjøp og endring av abonnement", pattern: "subscriptionManagement" },
+            { text: "Betaling og faktura", pattern: "billingAndInvoices" },
+        ];
+  
+        csButtons.forEach(btn => {
+            const button = document.createElement('button');
+            button.classList.add('faq-button', 'cs-button');
+            button.textContent = btn.text;
+            button.onclick = () => handleCSAction(btn.pattern);
+            button.setAttribute('data-pattern', btn.pattern);
+            buttonsContainer.appendChild(button);
+        });
+  
+        // Append the buttons to the chatbox
+        chatbox.appendChild(createChatLi(buttonsContainer, "incoming"));
+        scrollToBottomOfChat();
+      }, 500); // Delay before showing buttons to simulate typing
+    }, 0); // Adjusted to transition immediately to second typing animation
   }
+  
   
   function handleCSAction(pattern) {
     const chatbox = document.querySelector(".chatbox");
@@ -801,7 +909,7 @@ function getArticleIdFromUrl() {
         } else if (pattern === "billingAndInvoices") {
           options = [
             { text: "Betalingsrelaterte spørsmål", pattern: "betalingsspørsmål" },
-            { text: "Abonnementshåndtering og endringer", pattern: "Abonnementshandtering"},
+            { text: "Abonnementshåndtering og endringer", pattern: "Abonnementshåndtering"},
           ];
         } else if (pattern === "paperDelivery") {
           options = [
@@ -824,7 +932,7 @@ function getArticleIdFromUrl() {
               setTimeout(() => {
                 if (opt.pattern === "accountAndLogin" || opt.pattern === "accessAndSubscription" || opt.pattern === "technicalIssues" || opt.pattern === "generalQuestions") {
                   handleDigitalLoginSubAction(opt.pattern);
-                } else if (opt.pattern === "betalingsspørsmål" || opt.pattern === "Abonnementshandtering") {
+                } else if (opt.pattern === "betalingsspørsmål" || opt.pattern === "Abonnementshåndtering") {
                   handleBillingAndInvoicesSubAction(opt.pattern);
                 } else {
                   const answerMessage = `<strong>${opt.text}</strong><br>${opt.answer}`;
@@ -877,51 +985,53 @@ function getArticleIdFromUrl() {
       "generalQuestions": "Generelle spørsmål om tjenestene"
     };
 
-    const categoryMessage = `Du valgte "${categoryNames[pattern]}" Trykk på knappene for å få svar på spørsmålet. 😊`;
-    chatbox.appendChild(createChatLi(categoryMessage, "incoming"));
-  
-    showTypingAnimation();
+    showTypingAnimation(); // Start typing animation
     setTimeout(() => {
-      hideTypingAnimation();
-      const questions = details[pattern];
-    
-      if (questions) {
-        const buttonsContainer = document.createElement('div');
-        buttonsContainer.classList.add('faq-buttons-container');
-    
-        questions.forEach(question => {
-          const button = document.createElement('button');
-          button.classList.add('faq-button', 'sub-cs-button');
-          button.textContent = question.text;
-          button.onclick = () => {
-            showTypingAnimation();
-            setTimeout(() => {
-              const answerMessage = `<strong>${question.text}</strong><br>${question.answer}`;
-              chatbox.appendChild(createChatLi(answerMessage, "incoming"));
-              hideTypingAnimation();
-              scrollToBottomOfChat();
-            }, 1500);
-          };
-          buttonsContainer.appendChild(button);
-        });
-    
-        chatbox.appendChild(createChatLi(buttonsContainer, "incoming"));
-        scrollToBottomOfChat();
-      } else {
-        const message = "There are no specific questions available for this category.";
-        chatbox.appendChild(createChatLi(message, "incoming"));
-      }
-    }, 1500);
+      hideTypingAnimation(); // Hide typing animation
+      const categoryMessage = `Du valgte "${categoryNames[pattern]}" Trykk på knappene for å få svar på spørsmålet. 😊`;
+      chatbox.appendChild(createChatLi(categoryMessage, "incoming"));
+      scrollToBottomOfChat();
+  
+      showTypingAnimation(); // Start typing animation for buttons
+      setTimeout(() => {
+        hideTypingAnimation(); // Hide typing animation before showing buttons
+        const questions = details[pattern];
+  
+        if (questions) {
+          const buttonsContainer = document.createElement('div');
+          buttonsContainer.classList.add('faq-buttons-container');
+  
+          questions.forEach(question => {
+            const button = document.createElement('button');
+            button.classList.add('faq-button', 'sub-cs-button');
+            button.textContent = question.text;
+            button.onclick = () => {
+              showTypingAnimation(); // Show typing for each button click
+              setTimeout(() => {
+                const answerMessage = `<strong>${question.text}</strong><br>${question.answer}`;
+                chatbox.appendChild(createChatLi(answerMessage, "incoming"));
+                hideTypingAnimation(); // Hide typing animation after showing answer
+                scrollToBottomOfChat();
+              }, 1500); // Delay to mimic typing for the answer
+            };
+            buttonsContainer.appendChild(button);
+          });
+  
+          chatbox.appendChild(createChatLi(buttonsContainer, "incoming"));
+          scrollToBottomOfChat();
+        }
+      }, 500); // Delay before showing buttons to simulate typing
+    }, 0); // Initial delay to mimic typing and processing of category choice
   }
 
   function handleBillingAndInvoicesSubAction(pattern) {
     const chatbox = document.querySelector(".chatbox");
     const categoryNames = {
-      "Abonnementshåndtering": "Betalingsrelaterte spørsmål",
-      "betalingsspørsmål": "Abonnementshåndtering og endringer"
+      "Abonnementshåndtering": "Abonnementshåndtering og endringer",
+      "betalingsspørsmål": "Betalingsrelaterte spørsmål"
     };
-    const details = {
-    
+
+  const details = {
   "betalingsspørsmål": [
     { text: "Kvittering for kortkjøp?", answer: "Kvitteringer for ditt kjøp finner du  <a href=https://payment.schibsted.no/account/purchasehistory/?redirect_uri=https://www.smp.no>her.</a>" },
     { text: "Feil beløp ved abonnementsbestilling?", answer: "Dersom dette skyldes feil fra vår side vil vi selvsagt rydde opp i situasjonen. Ta kontakt med vårt kundesenter: abonnement@smp.no, så hjelper vi deg." },
@@ -938,42 +1048,48 @@ function getArticleIdFromUrl() {
     { text: "Abonnement fornyet til redusert pris?", answer: "Alle våre abonnement er løpende til det blir sagt opp. Dersom man bestiller et abonnement til reduser pris og abonnementet ikke blir sagt opp, vil abonnementet løpe videre til ordinær pris." }
   ]
     };
+  
+  showTypingAnimation(); // Start typing animation for the category message
+  setTimeout(() => {
+    hideTypingAnimation(); // Hide typing animation
     const categoryMessage = `Du valgte "${categoryNames[pattern]}" Trykk på knappene for å få svar på spørsmålet. 😊`;
     chatbox.appendChild(createChatLi(categoryMessage, "incoming"));
-  
-    showTypingAnimation();
+    scrollToBottomOfChat();
+
+    showTypingAnimation(); // Start typing animation for buttons
     setTimeout(() => {
-      hideTypingAnimation();
+      hideTypingAnimation(); // Hide typing animation before showing buttons
       const questions = details[pattern];
-  
+
       if (questions) {
         const buttonsContainer = document.createElement('div');
         buttonsContainer.classList.add('faq-buttons-container');
-  
+
         questions.forEach(question => {
           const button = document.createElement('button');
           button.classList.add('faq-button', 'sub-cs-button');
           button.textContent = question.text;
           button.onclick = () => {
-            showTypingAnimation();
+            showTypingAnimation(); // Show typing for each button click
             setTimeout(() => {
               const answerMessage = `<strong>${question.text}</strong><br>${question.answer}`;
               chatbox.appendChild(createChatLi(answerMessage, "incoming"));
-              hideTypingAnimation();
+              hideTypingAnimation(); // Hide typing animation after showing answer
               scrollToBottomOfChat();
-            }, 1500);
+            }, 1500); // Delay to mimic typing for the answer
           };
           buttonsContainer.appendChild(button);
         });
-  
+
         chatbox.appendChild(createChatLi(buttonsContainer, "incoming"));
+        scrollToBottomOfChat();
       } else {
         const message = "There are no specific questions available for this category.";
         chatbox.appendChild(createChatLi(message, "incoming"));
       }
-      scrollToBottomOfChat();
-    }, 1500);
-  }  
+    }, 500); // Delay before showing buttons to simulate typing
+  }, 0); // Initial delay to mimic typing and processing of category choice
+}
   
   function handleQuestionResponse(questionText, answer) {
     const chatbox = document.querySelector(".chatbox");
@@ -1052,49 +1168,53 @@ function resizeTextarea() {
          }
        });
 
-    // Start with the thinking animation
+// Start with the thinking animation
+showTypingAnimation();
+
+// After the initial thinking animation, show the greeting
+setTimeout(() => {
+  hideTypingAnimation();  // Hide the initial typing animation
+
+  const greetingMessage = articleId
+    ? `Velkommen til artikkelen! 😊`
+    : "Hei! Jeg er Sunnmørspostens Chatbot! 😊";
+
+  chatbox.appendChild(createChatLi(greetingMessage, "incoming"));
+  scrollToBottomOfChat();
+
+  // Start the thinking animation again before showing the follow-up message
+  showTypingAnimation();
+
+  setTimeout(() => {
+    hideTypingAnimation();  // Hide the typing animation after a delay
+
+    const clickButtonMessage = articleId
+      ? "Tips: Bruk pila øverst til venstre for å scrolle til topps."
+      : "Tips: Bruk pila øverst til venstre for å scrolle til topps.";
+
+    chatbox.appendChild(createChatLi(clickButtonMessage, "incoming"));
+    scrollToBottomOfChat();
+
+    // Start another thinking animation before showing buttons based on the context
     showTypingAnimation();
-  
-    // After the thinking animation, show the greeting
+
     setTimeout(() => {
-      hideTypingAnimation();
-      const greetingMessage = articleId
-        ? `Velkommen til artikkelen! Hvordan kan jeg hjelpe deg?`
-        : "Hei! Jeg er Sunnmørspostens Chatbot!";
-  
-      chatbox.appendChild(createChatLi(greetingMessage, "incoming"));
+      hideTypingAnimation();  // Hide the typing animation after another delay
+
+      if (articleId) {
+        const articleButtonsContainer = createArticleButtons();
+        chatbox.appendChild(createChatLi(articleButtonsContainer, "incoming"));
+      } else {
+        createFaqButtons();  // This function appends the default FAQ buttons to the chatbox
+      }
+
       scrollToBottomOfChat();
-  
-      // Start the thinking animation again
-      showTypingAnimation();
-  
-      // After that animation, show the buttons based on the context
-      setTimeout(() => {
-        hideTypingAnimation();
-        if (articleId) {
-          const articleButtonsContainer = createArticleButtons();
-          chatbox.appendChild(createChatLi(articleButtonsContainer, "incoming"));
-        } else {
-          createFaqButtons(); // This function appends the default FAQ buttons to the chatbox
-        }
-  
-        // Start the thinking animation again
-        showTypingAnimation();
-  
-        // Finally, after that animation, show the follow-up message
-        setTimeout(() => {
-          hideTypingAnimation();
-          const clickButtonMessage = articleId
-            ? "Trykk på en av artikkel-knappene, eller spør et spørsmål i chatten.😊"
-            : "Trykk på en av knappene, eller spør et spørsmål i chatten.😊";
-  
-          chatbox.appendChild(createChatLi(clickButtonMessage, "incoming"));
-          scrollToBottomOfChat();
-        }, 1500); // Delay for the third thinking animation
-  
-      }, 1500); // Delay for the second thinking animation
-  
-    }, 1500); // Delay for the first thinking animation
+    }, 500);  // Delay for showing article buttons or FAQ buttons
+
+  }, 500);  // Delay for the follow-up message
+
+}, 1500);  // Delay for the greeting message
+
 
         // Function to handle chat messages
         function handleChat() {
@@ -1136,6 +1256,12 @@ function resizeTextarea() {
     }
     chatbot.classList.toggle("show-chatbot");
   });
+
+  // Add event listener to the close icon
+const closeIcon = document.getElementById('close-icon');
+closeIcon.addEventListener('click', function() {
+    chatbot.classList.remove('show-chatbot');
+});
 
   fetch('../header.component.html')
     .then(response => response.text())

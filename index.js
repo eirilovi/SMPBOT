@@ -26,7 +26,11 @@ app.use(express.static("public")); // Serve static files
 let chatHistory = [
   { 
     role: 'system', 
-    content: `You are a friendly chatbot helper that answers questions with a smile😊. Write very short messages. Only communicate in "bokmål" Norwegian.`
+    content: `You are a helpful AI chatbot for Sunnmørsposten that answers questions with a smile 😊. Communicate briefly and precisely in Bokmål Norwegian. Follow these guidelines:
+    1. Always base your answers on verified information. Avoid making up or assuming information that is not explicitly provided or available in documents you have read.
+    2. If you mention specific individuals, such as journalists, ensure to use only information from the document you have been assigned, without adding or altering the information.
+    3. Be clear and concise in your responses, and avoid lengthy explanations. Aim to provide the information that is necessary and relevant to the user's question.
+    4. Use friendly and approachable language, but keep the focus on facts and provided information.`
   }
 ]; // Store the chat history
 
@@ -34,7 +38,7 @@ let chatHistory = [
   const subscribeRegex = /abonnent|abonement|abonner/i;
 
   if (subscribeRegex.test(userInput)) {
-    return 'Om du ønsker å bli abonnent, følg denne lenken: <a href="https://www.smp.no/dakapo/productpage/SPO/?source=topheader_A" target="_blank">Trykk her</a>';
+    return 'Vil du bli en del av Sunnmørsposten-familien? <br> Vi har abonnementspakker for enhver smak: Digital, Komplett, Ung (under 34 år) og Helg + Digital.😊 <br> Det er enkelt å melde seg på og få tilgang til vårt eksklusive innhold. <br> <a href="https://www.smp.no/dakapo/productpage/SPO/?source=topheader_A" target="_blank"><strong>Klikk her for å bli abonnent!</strong></a>';
   
   } else
   return ""; // Return an empty string if no FAQ matches
@@ -329,12 +333,14 @@ app.post('/ask', async (req, res) => {
           }
 
           if (articles.length > 0) {
-              response.push({
-                  type: 'confirm',
-                  content: "Jeg fant noen artikler med tags som matcher meldingen din. Ønsker du at jeg foreslår dem?😊",
-                  articles: articles
-              });
-          }
+            response.push({
+                type: 'confirm',
+                content: "Jeg fant noen artikler med tags som matcher meldingen din. Ønsker du at jeg foreslår dem?😊",
+                articles: articles
+            });
+        } else {
+                await askOpenAIForResponse(userInput);
+        }
       }
 
       // If no tags found or no specific content matched, proceed with keyword extraction and article search or OpenAI response
@@ -369,7 +375,7 @@ app.post('/ask', async (req, res) => {
   res.json({ response });
 
 
-async function askOpenAIForResponse(userInput) {
+async function askOpenAIForResponse() {
   try {
     const openAIResponse = await openai.createChatCompletion({
       model: 'gpt-3.5-turbo',
@@ -387,6 +393,33 @@ async function askOpenAIForResponse(userInput) {
     chatHistory.push({ role: 'system', content: errorMessage });
   }
 }});
+
+app.post('/askOpenAIForResponse', async (req, res) => {
+  const userInput = req.body.message;
+  chatHistory.push({ role: 'user', content: userInput }); // Log user input to chat history
+
+  let response = []; // Initialize response array
+
+  try {
+      const openAIResponse = await openai.createChatCompletion({
+          model: 'gpt-3.5-turbo',
+          messages: chatHistory,
+          max_tokens: 300,
+      });
+      let responseText = openAIResponse.data.choices[0].message.content.trim();
+      response.push({ type: 'text', content: responseText });
+      chatHistory.push({ role: 'system', content: responseText });
+  } catch (error) {
+      console.error("Error with OpenAI:", error);
+      let errorMessage = "Sorry, I encountered an error processing your request.";
+      response.push({ type: 'text', content: errorMessage });
+      chatHistory.push({ role: 'system', content: errorMessage });
+  }
+
+  // Send the response array back to the frontend
+  res.json({ response });
+});
+
 
 async function findTagsInMessage(userInput) {
   const allTags = await getAllTags(); // Fetch all tags from your database
