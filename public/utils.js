@@ -91,3 +91,10 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
     `;
 }
+
+export {
+  formatArticleMessage,
+  smoothScrollToBottom,
+  limitTextInput,
+  scrollToBottomOfChat,
+}

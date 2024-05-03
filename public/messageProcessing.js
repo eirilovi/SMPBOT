@@ -1,3 +1,13 @@
+import { showTypingAnimation } from './chatInteractions.js'
+import { hideTypingAnimation } from './chatInteractions.js'
+import { scrollToBottomOfChat } from './utils.js'
+import { fetchAndDisplayCategories } from './apiHandlers.js'
+import { createChatLi } from './chatInteractions.js'
+import { fetchCSButtons } from './csFaqManagement.js'
+import { processArticles } from './contentManagement.js'
+import { formatArticleMessage } from './utils.js'
+
+
 let selectedCategory = null;
 
 const generateResponse = (userMessage) => {
@@ -186,3 +196,7 @@ const generateResponse = (userMessage) => {
       }
     }, 500); // Consistent delay to simulate the typing effect initially  
   };
+
+export {
+  generateResponse,
+}

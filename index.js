@@ -1,12 +1,12 @@
 import express from 'express';
 import bodyParser from 'body-parser';
-import fs from 'fs';
 import openai from './config/open-ai.js';
 import cors from 'cors';
 import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
+import process from 'process';
 dotenv.config();
 
 const app = express();

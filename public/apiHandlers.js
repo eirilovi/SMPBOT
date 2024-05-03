@@ -1,3 +1,10 @@
+import { showTypingAnimation } from './chatInteractions.js';
+import { hideTypingAnimation } from './chatInteractions.js';
+import {scrollToBottomOfChat} from './utils.js'
+import {createChatLi} from './chatInteractions.js'
+import { processArticles } from './contentManagement.js'
+
+let selectedCategory = null;
 
 function fetchSimilarArticles(articleId) {
     const chatbox = document.querySelector(".chatbox");
@@ -214,6 +221,7 @@ const handleCategoryAction = (category, action) => {
               } else {
                 // Start processing articles from the first one for 'latest' and 'important'
                 processArticles(articles, 0, chatbox);
+
               }
               scrollToBottomOfChat();
             }, 500); // Delay to show intro message effectively
@@ -311,3 +319,12 @@ const handleCategoryAction = (category, action) => {
         scrollToBottomOfChat();
       });
   }
+
+export {
+  fetchAndDisplayCategories,
+  fetchContextArticles,
+  fetchSimilarArticles,
+  runArticle,
+  summarizeBackstory,
+  handleCategoryAction,
+}

@@ -1,3 +1,14 @@
+import { formatArticleMessage } from "./utils.js";
+import { showTypingAnimation } from "./chatInteractions.js";
+import { hideTypingAnimation } from "./chatInteractions.js";
+import { createChatLi } from "./chatInteractions.js";
+import { scrollToBottomOfChat } from "./utils.js";
+import { generateResponse } from "./messageProcessing.js";
+import { runArticle } from "./apiHandlers.js";
+import { fetchSimilarArticles } from "./apiHandlers.js";
+import { fetchContextArticles } from "./apiHandlers.js";
+import { summarizeBackstory } from "./apiHandlers.js";
+
 function processArticles(articles, index, chatbox) {
     if (index < articles.length) {
         showTypingAnimation();
@@ -138,3 +149,11 @@ const createFaqButtons = () => {
   
     return null;
   }
+
+export {
+  processArticles,
+  createFaqButtons,
+  createArticleButtons,
+  updateChatbotForArticle,
+  getArticleIdFromUrl,
+}

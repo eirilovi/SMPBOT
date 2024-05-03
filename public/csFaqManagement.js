@@ -1,3 +1,9 @@
+import { showTypingAnimation } from "./chatInteractions.js";
+import { createChatLi } from "./chatInteractions.js";
+import { hideTypingAnimation } from "./chatInteractions.js";
+import { scrollToBottomOfChat } from "./utils.js";
+
+
 function fetchCSButtons() {
     const chatbox = document.querySelector(".chatbox");
     const introMessage = "Her er kundeservicespørsmålene: 😊";
@@ -277,3 +283,11 @@ function fetchCSButtons() {
     chatbox.appendChild(createChatLi(message, "incoming"));
     scrollToBottomOfChat();
   }
+
+export {
+  handleBillingAndInvoicesSubAction,
+  handleCSAction,
+  handleDigitalLoginSubAction,
+  handleQuestionResponse,
+  fetchCSButtons,
+}

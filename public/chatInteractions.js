@@ -1,3 +1,5 @@
+import { scrollToBottomOfChat } from "./utils.js";
+
 // Define the showTypingAnimation function
 function showTypingAnimation() {
     const chatbox = document.querySelector(".chatbox");
@@ -81,3 +83,8 @@ function showTypingAnimation() {
     };
 
 
+export {
+  createChatLi,
+  showTypingAnimation,
+  hideTypingAnimation,
+}
