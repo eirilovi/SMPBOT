@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node index.js"
   },
-  "author": "Brad Traversy",
+  "author": "Eirik Lovik",
   "license": "MIT",
   "dependencies": {
     "@supabase/supabase-js": "^2.39.7",
