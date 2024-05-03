@@ -1189,8 +1189,8 @@ setTimeout(() => {
     hideTypingAnimation();  // Hide the typing animation after a delay
 
     const clickButtonMessage = articleId
-      ? "Tips: Bruk pila øverst til venstre for å scrolle til topps."
-      : "Tips: Bruk pila øverst til venstre for å scrolle til topps.";
+      ? "Tips: Bruk pila øverst til venstre for å scrolle tilbake til knappene."
+      : "Tips: Bruk pila øverst til venstre for å scrolle tilbake til knappene.";
 
     chatbox.appendChild(createChatLi(clickButtonMessage, "incoming"));
     scrollToBottomOfChat();
