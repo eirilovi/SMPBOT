@@ -114,7 +114,7 @@ function fetchSimilarArticles(articleId) {
                     selectedCategory = this.getAttribute('data-category');
                     setTimeout(() => { // Simulate processing time
                       hideTypingAnimation();
-                      chatbox.appendChild(createChatLi(`Du valgte kategori: ${selectedCategory}. Hva ønsker du jeg skal gjøre? 😊`, "incoming"));
+                      chatbox.appendChild(createChatLi(`Du valgte kategori: ${selectedCategory}. Hvilke artikler ønsker du å se? 😊`, "incoming"));
                       scrollToBottomOfChat();
   
                       showTypingAnimation(); // Show typing animation before displaying options

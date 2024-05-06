@@ -104,7 +104,9 @@ app.get('/articlesUngdom', async (req, res) => {
   const { data, error } = await supabase
     .from('Articles')
     .select('*')
-    .ilike('tags', `%${tag}%`);
+    .ilike('tags', `%${tag}%`)
+    .order('publication_date', { ascending: false })
+    .limit(3);
 
   if (error) {
     console.error('Error fetching Articles tagged with Ungdom:', error);
@@ -167,7 +169,7 @@ app.get('/Articles/:id', async (req, res) => {
     });
     chatHistory.push({ 
       role: 'system', 
-      content: `Article Content: ${data.content.substring(0, 300)}...` // Limit the content size
+      content: `Article Content: ${data.content}...`
     });
 
     res.json(data);
@@ -284,7 +286,9 @@ const searchArticlesInDatabase = async (keywords) => {
     let { data: Articles, error } = await supabase
       .from('Articles')
       .select('id, title, author, content, category, publication_date, url, tags')
-      .ilike('tags', `%${keyword}%`); // Adjust as needed for your schema
+      .ilike('tags', `%${keyword}%`) // Adjust as needed for your schema 
+      .order('publication_date', { ascending: false })  
+      .limit(3);
 
     if (error) {
       console.error('Error searching Articles by keywords:', error);

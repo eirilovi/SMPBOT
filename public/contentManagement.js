@@ -80,9 +80,9 @@ const createFaqButtons = () => {
     const articleId = getArticleIdFromUrl();
     const articleButtons = [
       { text: "Oppsummer artikkel", pattern: "summarize article" },
-      { text: "Lignende artikler", pattern: "similar articles", id: articleId },
+      { text: "Bakgrunn kort forklart", pattern: "show backstory", id: articleId },
       { text: "Artikler i samme serie", pattern: "context", id: articleId },
-      { text: "Bakgrunn kort forklart", pattern: "show backstory", id: articleId } // New button for backstory
+      { text: "Lignende artikler", pattern: "similar articles", id: articleId }
     ];  
 
     const buttonsContainer = document.createElement('div');

@@ -6,7 +6,7 @@ import { scrollToBottomOfChat } from "./utils.js";
 
 function fetchCSButtons() {
     const chatbox = document.querySelector(".chatbox");
-    const introMessage = "Her er kundeservicespørsmålene: 😊";
+    const introMessage = "Her er de tilgjengelige kategoriene for kundeservice: 😊";
     chatbox.appendChild(createChatLi(introMessage, "incoming"));
     
     // Show typing animation initially for the intro message

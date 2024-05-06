@@ -394,6 +394,11 @@ button.disabled {
   cursor: not-allowed;
 }
 
+.not-allowed {
+  cursor: not-allowed;
+  background-color: rgb(234, 234, 234) !important;
+}
+
 /* Container for FAQ buttons to lay them out horizontally */
 .faq-buttons-container {
   display: flex;

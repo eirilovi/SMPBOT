@@ -8,6 +8,7 @@ function showTypingAnimation() {
   
     // Disable the chat input area and specific buttons
     chatInput.disabled = true;
+    chatInput.classList.add('not-allowed');
     specificButtons.forEach(button => {
       button.disabled = true;  // Disable the button
       button.classList.add('disabled');  // Add a 'disabled' class for styling
@@ -51,6 +52,7 @@ function showTypingAnimation() {
   
     // Re-enable the chat input area and specific buttons
     chatInput.disabled = false;
+    chatInput.classList.remove('not-allowed');
     specificButtons.forEach(button => {
       button.disabled = false;  // Enable the button
       button.classList.remove('disabled');  // Remove the 'disabled' class

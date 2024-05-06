@@ -100,7 +100,7 @@ setTimeout(() => {
     hideTypingAnimation();  // Hide the typing animation after a delay
 
     const clickButtonMessage = articleId
-      ? "Tips: Bruk pila øverst til venstre for å scrolle til topps."
+      ? "Gjerne spør meg hvis du har spørsmål om artikkelen, eller benytt knappene nedenfor."
       : "Tips: Bruk pila øverst til venstre for å scrolle til topps.";
 
     chatbox.appendChild(createChatLi(clickButtonMessage, "incoming"));
