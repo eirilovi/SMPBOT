@@ -88,7 +88,7 @@ setTimeout(() => {
 
   const greetingMessage = articleId
     ? `Velkommen til artikkelen! 😊`
-    : "Hei! Jeg er Sunnmørspostens Chatbot! 😊";
+    : "NB: Vær oppmerksom på at dette er en AI-chatbot. Noen detaljer kan være unøyaktige.";
 
   chatbox.appendChild(createChatLi(greetingMessage, "incoming"));
   scrollToBottomOfChat();
@@ -101,7 +101,7 @@ setTimeout(() => {
 
     const clickButtonMessage = articleId
       ? "Gjerne spør meg hvis du har spørsmål om artikkelen, eller benytt knappene nedenfor."
-      : "Tips: Bruk pila øverst til venstre for å scrolle til topps.";
+      : "Hei! Jeg er Sunnmørspostens Chatbot! 😊";
 
     chatbox.appendChild(createChatLi(clickButtonMessage, "incoming"));
     scrollToBottomOfChat();

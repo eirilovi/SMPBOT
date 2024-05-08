@@ -445,7 +445,7 @@ app.get('/summarizeArticle/:id', async (req, res) => {
   // Prepare prompt for GPT-3-turbo
   const prompt = 
   
-  `Write an ULTRA-SHORT summary in norwegian about this article in ONLY THREE bullet points that are SEPERATED WITH PARAGRAPHS using the symbol •: \n\n${article.content}`;
+  `You will include this message after every message: <strong>NB: Denne oppsummeringen er generert av ChatGPT</strong>. Write an ULTRA-SHORT summary in norwegian about this article in ONLY THREE bullet points that are SEPERATED WITH PARAGRAPHS using the symbol •: \n\n${article.content}`;
 
   try {
     const openAIResponse = await openai.createChatCompletion({
@@ -471,7 +471,7 @@ app.post('/summarizeMultipleArticlesBackstory', async (req, res) => {
   }
 
   // Prepare prompt for GPT-3-turbo to summarize all contents
-  const prompt = `Write an ULTRA-SHORT summary in Norwegian based on the following content, summarizing the main points into one sentence: \n\n${contents}`;
+  const prompt = `You will include this message after every message: <br><br><strong>NB: Denne oppsummeringen er generert av ChatGPT</strong>. Write an ULTRA-SHORT summary in Norwegian based on the following content, summarizing the main points into one sentence: \n\n${contents}`;
 
   try {
     const openAIResponse = await openai.createChatCompletion({
