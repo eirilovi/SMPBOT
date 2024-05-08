@@ -30,7 +30,9 @@ let chatHistory = [
     1. Always base your answers on verified information. Avoid making up or assuming information that is not explicitly provided or available in documents you have read.
     2. If you mention specific individuals, such as journalists, ensure to use only information from the document you have been assigned, without adding or altering the information.
     3. Be clear and concise in your responses, and avoid lengthy explanations. Aim to provide the information that is necessary and relevant to the user's question.
-    4. Use friendly and approachable language, but keep the focus on facts and provided information.`
+    4. Use friendly and approachable language, but keep the focus on facts and provided information.
+    5. If a user asks to recommend an article, you will encourage the user to write tags they are interested in.
+    6. Otherwise make sure to recommend to the user to utilize the buttons above, as they are very helpful.`
   }
 ]; // Store the chat history
 
@@ -39,30 +41,8 @@ let chatHistory = [
 
   if (subscribeRegex.test(userInput)) {
     return 'Vil du bli en del av Sunnmørsposten-familien? <br> Vi har abonnementspakker for enhver smak: Digital, Komplett, Ung (under 34 år) og Helg + Digital.😊 <br> Det er enkelt å melde seg på og få tilgang til vårt eksklusive innhold. <br> <a href="https://www.smp.no/dakapo/productpage/SPO/?source=topheader_A" target="_blank"><strong>Klikk her for å bli abonnent!</strong></a>';
-  
-  } else
-  return ""; // Return an empty string if no FAQ matches
+  }
 }
-const insertKeywordsToChatHistory = () => {
-  const keywords = [
-    'abonnent', 'Schibsted', 'min side', 'vilkår', 'passord', 'e-post', 'finner abonnementet',
-    'e-postadresse', 'eAvis', 'plussartikler', 'kundenummer', 'eAvisen', 'nedlasting',
-    'eAvis tilgjengelig', 'tidligere artikkel', 'gamle utgaver', 'stoppe papiravis',
-    'refunder papiravis', 'leverer avis', 'levert avis', 'fått papiravis', 'uteblitt avis',
-    'abonnementstyper', 'inkludert i abonnement', 'dele abonnement', 'administrere abonnement',
-    'papiravisen uten', 'digital tilgang', 'enkel artikkel', 'pluss', 'kvittering',
-    'feil beløp', 'fakturagebyr', 'eFaktura', 'betalingspåminnelse', 'angrerett digital',
-    'sagt opp restgiro', 'fakturaperiode', 'betalingskort', 'reduksjon pris', 'Polaris Media'
-  ];
-
-  // Push a system message with keywords
-  chatHistory.push({
-    role: 'system',
-    content: `recognized keywords: ${keywords.join(', ')}`
-  });
-};
-
-
 
 app.get('/relevantArticles', async (req, res) => {
   try {
@@ -81,9 +61,9 @@ app.get('/relevantArticles', async (req, res) => {
     // Filter to the top 5 based on importance
     if (recentArticles && recentArticles.length > 0) {
         const topArticles = recentArticles
-            .sort((a, b) => b.viktighetsgrad - a.viktighetsgrad) // Sort by 'viktighetsgrad' descending
+            // Sort by 'viktighetsgrad' descending
+            .sort((a, b) => b.viktighetsgrad - a.viktighetsgrad) 
             .slice(0, 3); // Take the top 3
-
         // Return articles as JSON
         res.json({
             message: "Dette er de siste og mest relevante artiklene for i dag: 😊",
@@ -169,7 +149,7 @@ app.get('/Articles/:id', async (req, res) => {
     });
     chatHistory.push({ 
       role: 'system', 
-      content: `Article Content: ${data.content}...`
+      content: `Article Content: ${data.content}`
     });
 
     res.json(data);
@@ -621,5 +601,4 @@ app.get("", (req, res) => {
 
 app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
-  insertKeywordsToChatHistory();
 });

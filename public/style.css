@@ -502,7 +502,8 @@ button.disabled {
   .category-button,
   .faq-button,
   .option-button {
-    width: auto; /* Let buttons take the width of their container */
+    width: 230px; /* Let buttons take the width of their container */
     margin: 5px 0; /* Adjust for vertical stacking */
+    text-align: left;
   }
 }
