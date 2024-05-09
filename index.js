@@ -240,53 +240,6 @@ app.get('/Articles/:category/random', async (req, res) => {
   }
 });
 
-const extractKeywords = (userInput) => {
-  // Define a list of key phrases or words to look for
-  const keyPhrases = ['artificial intelligence', 'machine learning', 'climate change', 'flowers']; // Add more as needed
-  let keywords = [];
-
-  // Convert to lowercase for case-insensitive matching
-  const inputLower = userInput.toLowerCase();
-
-  // Check if user input includes any key phrases
-  keyPhrases.forEach(phrase => {
-    if (inputLower.includes(phrase)) {
-      keywords.push(phrase);
-    }
-  });
-
-  return keywords;
-};
-
-const searchArticlesInDatabase = async (keywords) => {
-  let ArticlesFound = [];
-
-  // Assuming each keyword represents a separate search criterion
-  for (let keyword of keywords) {
-    let { data: Articles, error } = await supabase
-      .from('Articles')
-      .select('id, title, author, content, category, publication_date, url, tags')
-      .ilike('tags', `%${keyword}%`) // Adjust as needed for your schema 
-      .order('publication_date', { ascending: false })  
-      .limit(3);
-
-    if (error) {
-      console.error('Error searching Articles by keywords:', error);
-      continue; // Proceed to the next keyword on error
-    }
-
-    // Append found Articles, avoiding duplicates
-    Articles.forEach(Article => {
-      if (!ArticlesFound.find(a => a.id === Article.id)) {
-        ArticlesFound.push(Article);
-      }
-    });
-  }
-
-  console.log(ArticlesFound.length > 0 ? `${ArticlesFound.length} Articles found.` : 'No Articles found based on keywords.');
-  return ArticlesFound;
-};
-
 app.post('/ask', async (req, res) => {
   const userInput = req.body.message;
   chatHistory.push({ role: 'user', content: userInput }); // Log user input to chat history
@@ -326,32 +279,9 @@ app.post('/ask', async (req, res) => {
                 await askOpenAIForResponse(userInput);
         }
       }
-
       // If no tags found or no specific content matched, proceed with keyword extraction and article search or OpenAI response
       if (response.length === 0) {
-          // Extract keywords from the user input
-          const keywords = extractKeywords(userInput);
-          if (keywords.length > 0) {
-              const articles = await searchArticlesInDatabase(keywords);
-              if (articles.length > 0) {
-                  // Articles found, prepare article type response
-                  articles.forEach(article => {
-                      response.push({
-                          type: 'article',
-                          title: article.title,
-                          content: article.content,
-                          url: article.url,
-                          author: article.author
-                      });
-                      chatHistory.push({ role: 'system', content: article.title }); // Log article titles to chat history
-                  });
-              }
-          }
-
-          // If no articles or keywords were relevant, fallback to OpenAI's GPT model
-          if (response.length === 0) {
-              await askOpenAIForResponse(userInput);
-          }
+        await askOpenAIForResponse(userInput);
       }
   }
 
