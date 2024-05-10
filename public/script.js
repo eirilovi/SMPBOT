@@ -159,7 +159,6 @@ setTimeout(() => {
 
   // Function to toggle the chat window and initialize chatbot
   chatbotToggler.addEventListener('click', function() {
-    
     // If the chatbot is not initialized yet, initialize it
     if (!chatbot.classList.contains('initialized')) {
       initializeChatbot();
