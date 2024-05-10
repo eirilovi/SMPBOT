@@ -1,5 +1,6 @@
 import { Configuration, OpenAIApi } from 'openai';
 import dotenv from 'dotenv';
+import process from 'process';
 dotenv.config();
 
 const configuration = new Configuration({
