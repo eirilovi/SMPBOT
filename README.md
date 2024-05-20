@@ -2,6 +2,9 @@
 
 The Sunnmørsposten Chatbot is an interactive assistant designed to provide real-time information and support to users. It can fetch articles, handle customer service inquiries, and offer a rich user interaction interface with a focus on Bokmål Norwegian. This project is structured with a Node.js backend utilizing Express and a dynamic frontend built with vanilla JavaScript.
 
+## Code Overview
+For an in-depth analysis and comprehensive discussion of the entire project, please refer to the Bachelor's thesis report.
+
 ## Features
 
 - **Article Fetching**: Users can request articles by categories, importance, or randomly.
