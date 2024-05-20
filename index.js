@@ -1,12 +1,12 @@
 import express from 'express';
 import bodyParser from 'body-parser';
-import fs from 'fs';
 import openai from './config/open-ai.js';
 import cors from 'cors';
 import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
+import process from 'process';
 dotenv.config();
 
 const app = express();
@@ -30,7 +30,9 @@ let chatHistory = [
     1. Always base your answers on verified information. Avoid making up or assuming information that is not explicitly provided or available in documents you have read.
     2. If you mention specific individuals, such as journalists, ensure to use only information from the document you have been assigned, without adding or altering the information.
     3. Be clear and concise in your responses, and avoid lengthy explanations. Aim to provide the information that is necessary and relevant to the user's question.
-    4. Use friendly and approachable language, but keep the focus on facts and provided information.`
+    4. Use friendly and approachable language, but keep the focus on facts and provided information.
+    5. If a user asks to recommend an article, you will encourage the user to write tags they are interested in.
+    6. Otherwise make sure to recommend to the user to utilize the buttons above, as they are very helpful.`
   }
 ]; // Store the chat history
 
@@ -39,30 +41,8 @@ let chatHistory = [
 
   if (subscribeRegex.test(userInput)) {
     return 'Vil du bli en del av Sunnmørsposten-familien? <br> Vi har abonnementspakker for enhver smak: Digital, Komplett, Ung (under 34 år) og Helg + Digital.😊 <br> Det er enkelt å melde seg på og få tilgang til vårt eksklusive innhold. <br> <a href="https://www.smp.no/dakapo/productpage/SPO/?source=topheader_A" target="_blank"><strong>Klikk her for å bli abonnent!</strong></a>';
-  
-  } else
-  return ""; // Return an empty string if no FAQ matches
+  }
 }
-const insertKeywordsToChatHistory = () => {
-  const keywords = [
-    'abonnent', 'Schibsted', 'min side', 'vilkår', 'passord', 'e-post', 'finner abonnementet',
-    'e-postadresse', 'eAvis', 'plussartikler', 'kundenummer', 'eAvisen', 'nedlasting',
-    'eAvis tilgjengelig', 'tidligere artikkel', 'gamle utgaver', 'stoppe papiravis',
-    'refunder papiravis', 'leverer avis', 'levert avis', 'fått papiravis', 'uteblitt avis',
-    'abonnementstyper', 'inkludert i abonnement', 'dele abonnement', 'administrere abonnement',
-    'papiravisen uten', 'digital tilgang', 'enkel artikkel', 'pluss', 'kvittering',
-    'feil beløp', 'fakturagebyr', 'eFaktura', 'betalingspåminnelse', 'angrerett digital',
-    'sagt opp restgiro', 'fakturaperiode', 'betalingskort', 'reduksjon pris', 'Polaris Media'
-  ];
-
-  // Push a system message with keywords
-  chatHistory.push({
-    role: 'system',
-    content: `recognized keywords: ${keywords.join(', ')}`
-  });
-};
-
-
 
 app.get('/relevantArticles', async (req, res) => {
   try {
@@ -81,9 +61,9 @@ app.get('/relevantArticles', async (req, res) => {
     // Filter to the top 5 based on importance
     if (recentArticles && recentArticles.length > 0) {
         const topArticles = recentArticles
-            .sort((a, b) => b.viktighetsgrad - a.viktighetsgrad) // Sort by 'viktighetsgrad' descending
+            // Sort by 'viktighetsgrad' descending
+            .sort((a, b) => b.viktighetsgrad - a.viktighetsgrad) 
             .slice(0, 3); // Take the top 3
-
         // Return articles as JSON
         res.json({
             message: "Dette er de siste og mest relevante artiklene for i dag: 😊",
@@ -104,7 +84,9 @@ app.get('/articlesUngdom', async (req, res) => {
   const { data, error } = await supabase
     .from('Articles')
     .select('*')
-    .ilike('tags', `%${tag}%`);
+    .ilike('tags', `%${tag}%`)
+    .order('publication_date', { ascending: false })
+    .limit(3);
 
   if (error) {
     console.error('Error fetching Articles tagged with Ungdom:', error);
@@ -167,7 +149,7 @@ app.get('/Articles/:id', async (req, res) => {
     });
     chatHistory.push({ 
       role: 'system', 
-      content: `Article Content: ${data.content.substring(0, 300)}...` // Limit the content size
+      content: `Article Content: ${data.content}`
     });
 
     res.json(data);
@@ -258,51 +240,6 @@ app.get('/Articles/:category/random', async (req, res) => {
   }
 });
 
-const extractKeywords = (userInput) => {
-  // Define a list of key phrases or words to look for
-  const keyPhrases = ['artificial intelligence', 'machine learning', 'climate change', 'flowers']; // Add more as needed
-  let keywords = [];
-
-  // Convert to lowercase for case-insensitive matching
-  const inputLower = userInput.toLowerCase();
-
-  // Check if user input includes any key phrases
-  keyPhrases.forEach(phrase => {
-    if (inputLower.includes(phrase)) {
-      keywords.push(phrase);
-    }
-  });
-
-  return keywords;
-};
-
-const searchArticlesInDatabase = async (keywords) => {
-  let ArticlesFound = [];
-
-  // Assuming each keyword represents a separate search criterion
-  for (let keyword of keywords) {
-    let { data: Articles, error } = await supabase
-      .from('Articles')
-      .select('id, title, author, content, category, publication_date, url, tags')
-      .ilike('tags', `%${keyword}%`); // Adjust as needed for your schema
-
-    if (error) {
-      console.error('Error searching Articles by keywords:', error);
-      continue; // Proceed to the next keyword on error
-    }
-
-    // Append found Articles, avoiding duplicates
-    Articles.forEach(Article => {
-      if (!ArticlesFound.find(a => a.id === Article.id)) {
-        ArticlesFound.push(Article);
-      }
-    });
-  }
-
-  console.log(ArticlesFound.length > 0 ? `${ArticlesFound.length} Articles found.` : 'No Articles found based on keywords.');
-  return ArticlesFound;
-};
-
 app.post('/ask', async (req, res) => {
   const userInput = req.body.message;
   chatHistory.push({ role: 'user', content: userInput }); // Log user input to chat history
@@ -342,32 +279,9 @@ app.post('/ask', async (req, res) => {
                 await askOpenAIForResponse(userInput);
         }
       }
-
       // If no tags found or no specific content matched, proceed with keyword extraction and article search or OpenAI response
       if (response.length === 0) {
-          // Extract keywords from the user input
-          const keywords = extractKeywords(userInput);
-          if (keywords.length > 0) {
-              const articles = await searchArticlesInDatabase(keywords);
-              if (articles.length > 0) {
-                  // Articles found, prepare article type response
-                  articles.forEach(article => {
-                      response.push({
-                          type: 'article',
-                          title: article.title,
-                          content: article.content,
-                          url: article.url,
-                          author: article.author
-                      });
-                      chatHistory.push({ role: 'system', content: article.title }); // Log article titles to chat history
-                  });
-              }
-          }
-
-          // If no articles or keywords were relevant, fallback to OpenAI's GPT model
-          if (response.length === 0) {
-              await askOpenAIForResponse(userInput);
-          }
+        await askOpenAIForResponse(userInput);
       }
   }
 
@@ -461,7 +375,7 @@ app.get('/summarizeArticle/:id', async (req, res) => {
   // Prepare prompt for GPT-3-turbo
   const prompt = 
   
-  `Write an ULTRA-SHORT summary in norwegian about this article in ONLY THREE bullet points that are SEPERATED WITH PARAGRAPHS using the symbol •: \n\n${article.content}`;
+  `You will include this message at the end with ONE line of space: <strong>NB: Denne oppsummeringen er generert av ChatGPT</strong>. Write an ULTRA-SHORT summary in norwegian about this article in ONLY THREE bullet points that are SEPERATED WITH PARAGRAPHS using the symbol •: \n\n${article.content}`;
 
   try {
     const openAIResponse = await openai.createChatCompletion({
@@ -487,7 +401,7 @@ app.post('/summarizeMultipleArticlesBackstory', async (req, res) => {
   }
 
   // Prepare prompt for GPT-3-turbo to summarize all contents
-  const prompt = `Write an ULTRA-SHORT summary in Norwegian based on the following content, summarizing the main points into one sentence: \n\n${contents}`;
+  const prompt = `You will include this message after every message: <br><br><strong>'NB: Denne oppsummeringen er generert av ChatGPT'</strong>. Write an ULTRA-SHORT summary in Norwegian based on the following content, summarizing the main points into one sentence: \n\n${contents}`;
 
   try {
     const openAIResponse = await openai.createChatCompletion({
@@ -617,5 +531,4 @@ app.get("", (req, res) => {
 
 app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
-  insertKeywordsToChatHistory();
 });
