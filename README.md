@@ -37,12 +37,3 @@ npm start
 ```
 This will run the server on http://localhost:3000.
 
-
-### Article-Specific
-
-- **Quick Tools**:
-  - **Summarize Article**: The chatbot can quickly make a summary about the article.
-  - **Find Similar Articles**: It can find articles with the same tags that the current one has.
-  - **View Series Articles**: If the article is part of a series, the chatbot can give you the context-articles.
-  - **Backstory Explanation**: If the article has a complicated backstory, the chatbot will give you a summary of the contextual articles.
-
